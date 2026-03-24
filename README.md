@@ -1,6 +1,6 @@
-# OneDrive-Vercel-Index (One-Click Deploy Version)
+# VercelDrive (One-Click Deploy Version)
 
-This project is a clone from [spencerwooo/onedrive-vercel-index](https://github.com/spencerwooo/onedrive-vercel-index), based on the archived version from the original author dated June 24, 2023. It includes some minor modifications that allow you to deploy it on Vercel for free, showcasing, sharing, previewing, and downloading your OneDrive files on a webpage. For specific deployment methods, please refer to the instructions below.
+This project is a clone from [spencerwooo/VercelDrive](https://github.com/spencerwooo/VercelDrive), based on the archived version from the original author dated June 24, 2023. It includes some minor modifications that allow you to deploy it on Vercel for free, showcasing, sharing, previewing, and downloading your OneDrive files on a webpage. For specific deployment methods, please refer to the instructions below.
 
 ## Modifications
 
@@ -9,7 +9,7 @@ This project is a clone from [spencerwooo/onedrive-vercel-index](https://github.
 > In this version, some sensitive variables are set using environment variables with prefixes other than `NEXT_PUBLIC_`. This is done to prevent casual website visitors from easily obtaining your OneDrive account, ClientID, and ClientSecret information.
 
 - Additionally, this version is set to automatically close the OAuth authentication channel after OAuth authentication is completed. This is to prevent malicious individuals from easily obtaining user configuration information through the OAuth authentication URL link.
-- Latest commit for this is fixing src/components/previews/VideoPreview.tsx to giving an error which push up to `pnpm install exited with exitcode 1`. I have fixed this at [15c685c](https://github.com/Astear17/onedrive-vercel-index/commit/15c685c06ff223d58e8d5f7eebf61a74fccde8e6) and removing every single `\` form the code, which cause up 404 on HTML even if the server did response normally.
+- Latest commit for this is fixing src/components/previews/VideoPreview.tsx to giving an error which push up to `pnpm install exited with exitcode 1`. I have fixed this at [15c685c](https://github.com/Astear17/VercelDrive/commit/15c685c06ff223d58e8d5f7eebf61a74fccde8e6) and removing every single `\` form the code, which cause up 404 on HTML even if the server did response normally.
 
 ## Demo
 
@@ -33,19 +33,19 @@ The [Production](https://2drv.vercel.app) of this One-Click Deploy version. | Th
 
 3. **Once you're prepared, you can click the button below to deploy:**
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2Fonedrive-vercel-index&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
 
 > - If you have folders that need password protection.
 >
-> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2Fonedrive-vercel-index&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,NEXT_PUBLIC_PROTECTED_ROUTES,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `NEXT_PUBLIC_PROTECTED_ROUTES`
+> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,NEXT_PUBLIC_PROTECTED_ROUTES,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `NEXT_PUBLIC_PROTECTED_ROUTES`
 >
 > - If you have multiple OneDrive accounts that need to use the same Redis database.
 >
-> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2Fonedrive-vercel-index&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,KV_PREFIX&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `KV_PREFIX`
+> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,KV_PREFIX&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `KV_PREFIX`
 >
 > - If you need to deploy multiple OneDrive-Index, and all have folders that need password protection.
 >
-> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2Fonedrive-vercel-index&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,NEXT_PUBLIC_PROTECTED_ROUTES,CLIENT_ID,CLIENT_SECRET,KV_PREFIX&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `NEXT_PUBLIC_PROTECTED_ROUTES` & `KV_PREFIX`
+> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,NEXT_PUBLIC_PROTECTED_ROUTES,CLIENT_ID,CLIENT_SECRET,KV_PREFIX&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `NEXT_PUBLIC_PROTECTED_ROUTES` & `KV_PREFIX`
 
 4. **After the initial successful deployment, the deployed page will return a 404 error because we still need to connect to the Redis database.**
 
@@ -53,7 +53,7 @@ The [Production](https://2drv.vercel.app) of this One-Click Deploy version. | Th
 
 5. **After `REDIS_URL` is successfully set, redeploy the project again.**
 
-6. **After successful deployment, when you visit your `onedrive-vercel-index` page for the first time, it will guide you to perform OAuth authentication (quite simple). For details, please refer to the [Instructions](https://ovi.swo.moe/zh/docs/getting-started#authentication) written by the original author.**
+6. **After successful deployment, when you visit your `VercelDrive` page for the first time, it will guide you to perform OAuth authentication (quite simple). For details, please refer to the [Instructions](https://ovi.swo.moe/zh/docs/getting-started#authentication) written by the original author.**
 
 ## Environment Variables
 
