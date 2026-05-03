@@ -169,6 +169,18 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
   const { data, error, size, setSize } = useProtectedSWRInfinite(path, `${sortConfig.by} ${sortConfig.direction}`)
 
+  const isLoadingInitialData = !data && !error
+  const isLoadingMore = isLoadingInitialData || (size > 0 && data && typeof data[size - 1] === 'undefined')
+  const isEmpty = data?.[0]?.length === 0
+  const isReachingEnd = isEmpty || (data && typeof data[data.length - 1]?.next === 'undefined')
+  const onlyOnePage = data && typeof data[0].next === 'undefined'
+
+  useEffect(() => {
+    if (!isReachingEnd && !isLoadingMore) {
+      setSize(size + 1)
+    }
+  }, [isReachingEnd, isLoadingMore, size, setSize])
+
   if (error) {
     // If error includes 403 which means the user has not completed initial setup, redirect to OAuth page
     if (error.status === 403) {
@@ -191,18 +203,6 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   }
 
   const responses: any[] = data ? [].concat(...data) : []
-
-  const isLoadingInitialData = !data && !error
-  const isLoadingMore = isLoadingInitialData || (size > 0 && data && typeof data[size - 1] === 'undefined')
-  const isEmpty = data?.[0]?.length === 0
-  const isReachingEnd = isEmpty || (data && typeof data[data.length - 1]?.next === 'undefined')
-  const onlyOnePage = data && typeof data[0].next === 'undefined'
-
-  useEffect(() => {
-    if (!isReachingEnd && !isLoadingMore) {
-      setSize(size + 1)
-    }
-  }, [isReachingEnd, isLoadingMore, size, setSize])
 
   if ('folder' in responses[0]) {
     // Expand list of API returns into flattened file data
