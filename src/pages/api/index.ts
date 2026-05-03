@@ -276,6 +276,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? folderData['@odata.nextLink'].match(/&\$skiptoken=(.+)/i)[1]
         : null
 
+      folderData['@odata.count'] = identityData.folder.childCount
+
       // Return paging token if specified
       if (nextPage) {
         res.status(200).json({ folder: folderData, next: nextPage })

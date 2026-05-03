@@ -207,6 +207,9 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   if ('folder' in responses[0]) {
     // Expand list of API returns into flattened file data
     const folderChildren = [].concat(...responses.map(r => r.folder.value)) as OdFolderObject['value']
+    
+    const totalChildren = responses[0].folder['@odata.count'] || 1
+    const percent = Math.min(100, Math.round((folderChildren.length / totalChildren) * 100))
 
     // Find README.md file to render
     const readmeFile = folderChildren.find(c => c.name.toLowerCase() === 'readme.md')
@@ -372,7 +375,7 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
             {isLoadingMore && (
               <div className="flex w-full items-center justify-center space-x-2 p-3 opacity-60">
                 <LoadingIcon className="inline-block h-4 w-4 animate-spin" />
-                <span>{t('Loading ...')}</span>
+                <span>{t('Loading files... {{percent}}%', { percent })}</span>
               </div>
             )}
           </div>
