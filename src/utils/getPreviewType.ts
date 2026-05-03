@@ -19,6 +19,7 @@ export const extensions = {
   jpg: preview.image,
   png: preview.image,
   webp: preview.image,
+  heic: preview.image,
 
   md: preview.markdown,
   markdown: preview.markdown,

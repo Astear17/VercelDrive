@@ -160,9 +160,14 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
   const { t } = useTranslation()
 
+  const [sortConfig, setSortConfig] = useState<{ by: string; direction: 'asc' | 'desc' }>({
+    by: 'name',
+    direction: 'asc',
+  })
+
   const path = queryToPath(query)
 
-  const { data, error, size, setSize } = useProtectedSWRInfinite(path)
+  const { data, error, size, setSize } = useProtectedSWRInfinite(path, `${sortConfig.by} ${sortConfig.direction}`)
 
   if (error) {
     // If error includes 403 which means the user has not completed initial setup, redirect to OAuth page
@@ -192,6 +197,12 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   const isEmpty = data?.[0]?.length === 0
   const isReachingEnd = isEmpty || (data && typeof data[data.length - 1]?.next === 'undefined')
   const onlyOnePage = data && typeof data[0].next === 'undefined'
+
+  useEffect(() => {
+    if (!isReachingEnd && !isLoadingMore) {
+      setSize(size + 1)
+    }
+  }, [isReachingEnd, isLoadingMore, size, setSize])
 
   if ('folder' in responses[0]) {
     // Expand list of API returns into flattened file data
@@ -337,6 +348,8 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
       folderGenerating,
       handleSelectedPermalink,
       handleFolderDownload,
+      sortConfig,
+      setSortConfig,
     }
 
     return (
@@ -356,27 +369,12 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
                   ? t('of {{count}} file(s) -', { count: folderChildren.length, context: 'loading' })
                   : t('of {{count}} file(s) -', { count: folderChildren.length, context: 'loaded' }))}
             </div>
-            <button
-              className={`flex w-full items-center justify-center space-x-2 p-3 disabled:cursor-not-allowed ${
-                isLoadingMore || isReachingEnd ? 'opacity-60' : 'hover:bg-gray-100 dark:hover:bg-gray-850'
-              }`}
-              onClick={() => setSize(size + 1)}
-              disabled={isLoadingMore || isReachingEnd}
-            >
-              {isLoadingMore ? (
-                <>
-                  <LoadingIcon className="inline-block h-4 w-4 animate-spin" />
-                  <span>{t('Loading ...')}</span>{' '}
-                </>
-              ) : isReachingEnd ? (
-                <span>{t('No more files')}</span>
-              ) : (
-                <>
-                  <span>{t('Load more')}</span>
-                  <FontAwesomeIcon icon="chevron-circle-down" />
-                </>
-              )}
-            </button>
+            {isLoadingMore && (
+              <div className="flex w-full items-center justify-center space-x-2 p-3 opacity-60">
+                <LoadingIcon className="inline-block h-4 w-4 animate-spin" />
+                <span>{t('Loading ...')}</span>
+              </div>
+            )}
           </div>
         )}
 

@@ -44,6 +44,8 @@ const FolderListLayout = ({
   handleSelectedPermalink,
   handleFolderDownload,
   toast,
+  sortConfig,
+  setSortConfig,
 }) => {
   const clipboard = useClipboard()
   const hashedToken = getStoredToken(path)
@@ -53,17 +55,40 @@ const FolderListLayout = ({
   // Get item path from item name
   const getItemPath = (name: string) => `${path === '/' ? '' : path}/${encodeURIComponent(name)}`
 
+  const handleSort = (column: string) => {
+    if (sortConfig.by === column) {
+      setSortConfig({
+        ...sortConfig,
+        direction: sortConfig.direction === 'asc' ? 'desc' : 'asc',
+      })
+    } else {
+      setSortConfig({
+        by: column,
+        direction: 'asc',
+      })
+    }
+  }
+
   return (
     <div className="rounded bg-white shadow-sm dark:bg-gray-900 dark:text-gray-100">
       <div className="grid grid-cols-12 items-center space-x-2 border-b border-gray-900/10 px-3 dark:border-gray-500/30">
-        <div className="col-span-12 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:col-span-6">
-          {t('Name')}
+        <div 
+          className="col-span-12 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:col-span-6 cursor-pointer hover:underline"
+          onClick={() => handleSort('name')}
+        >
+          {t('Name')} {sortConfig.by === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
         </div>
-        <div className="col-span-3 hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">
-          {t('Last Modified')}
+        <div 
+          className="col-span-3 hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block cursor-pointer hover:underline"
+          onClick={() => handleSort('lastModifiedDateTime')}
+        >
+          {t('Last Modified')} {sortConfig.by === 'lastModifiedDateTime' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
         </div>
-        <div className="hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">
-          {t('Size')}
+        <div 
+          className="hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block cursor-pointer hover:underline"
+          onClick={() => handleSort('size')}
+        >
+          {t('Size')} {sortConfig.by === 'size' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
         </div>
         <div className="hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">
           {t('Actions')}

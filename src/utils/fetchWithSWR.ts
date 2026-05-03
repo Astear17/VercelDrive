@@ -25,7 +25,7 @@ export async function fetcher([url, token]: [url: string, token?: string]): Prom
  * @param path Current query directory path
  * @returns useSWRInfinite API
  */
-export function useProtectedSWRInfinite(path: string = '') {
+export function useProtectedSWRInfinite(path: string = '', sort: string = '') {
   const hashedToken = getStoredToken(path)
 
   /**
@@ -40,10 +40,10 @@ export function useProtectedSWRInfinite(path: string = '') {
     if (previousPageData && !previousPageData.folder) return null
 
     // First page with no prevPageData
-    if (pageIndex === 0) return [`/api/?path=${path}`, hashedToken]
+    if (pageIndex === 0) return [`/api/?path=${path}${sort ? `&sort=${sort}` : ''}`, hashedToken]
 
     // Add nextPage token to API endpoint
-    return [`/api/?path=${path}&next=${previousPageData.next}`, hashedToken]
+    return [`/api/?path=${path}&next=${previousPageData.next}${sort ? `&sort=${sort}` : ''}`, hashedToken]
   }
 
   // Disable auto-revalidate, these options are equivalent to useSWRImmutable
