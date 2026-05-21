@@ -4,6 +4,7 @@ import { FC, MouseEventHandler, SetStateAction, useEffect, useRef, useState } fr
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import toast, { Toaster } from 'react-hot-toast'
 import emojiRegex from 'emoji-regex'
+import axios from 'axios'
 
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
@@ -40,6 +41,7 @@ import { PreviewContainer } from './previews/Containers'
 import FolderListLayout from './FolderListLayout'
 import FolderGridLayout from './FolderGridLayout'
 import UploadPanel from './UploadPanel'
+import type { ItemTypeFilter, SortConfig } from './FolderControls'
 
 // Disabling SSR for some previews
 const EPUBPreview = dynamic(() => import('./previews/EPUBPreview'), {
@@ -161,10 +163,11 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
   const { t } = useTranslation()
 
-  const [sortConfig, setSortConfig] = useState<{ by: string; direction: 'asc' | 'desc' }>({
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
     by: 'name',
     direction: 'asc',
   })
+  const [itemTypeFilter, setItemTypeFilter] = useState<ItemTypeFilter>('default')
 
   const path = queryToPath(query)
 
@@ -210,13 +213,18 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
   if ('folder' in responses[0]) {
     // Expand list of API returns into flattened file data
-    const folderChildren = [].concat(...responses.map(r => r.folder.value)) as OdFolderObject['value']
+    const allFolderChildren = [].concat(...responses.map(r => r.folder.value)) as OdFolderObject['value']
+    const folderChildren = allFolderChildren.filter(c => {
+      if (itemTypeFilter === 'folders') return Boolean(c.folder)
+      if (itemTypeFilter === 'files') return !c.folder
+      return true
+    })
 
     const totalChildren = responses[0].folder['@odata.count'] || 1
-    const percent = Math.min(100, Math.round((folderChildren.length / totalChildren) * 100))
+    const percent = Math.min(100, Math.round((allFolderChildren.length / totalChildren) * 100))
 
     // Find README.md file to render
-    const readmeFile = folderChildren.find(c => c.name.toLowerCase() === 'readme.md')
+    const readmeFile = allFolderChildren.find(c => c.name.toLowerCase() === 'readme.md')
 
     // Filtered file list helper
     const getFiles = () => folderChildren.filter(c => !c.folder && c.name !== '.password')
@@ -282,8 +290,51 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
           .catch(() => {
             setTotalGenerating(false)
             toast.error(t('Failed to download selected files.'), { id: toastId })
-          })
+        })
       }
+    }
+
+    const deleteItem = async (itemPath: string, itemName: string, confirm = true) => {
+      if (confirm) {
+        const confirmed = window.confirm(
+          t('Delete {{name}}? This will move it to the OneDrive recycle bin.', { name: itemName })
+        )
+        if (!confirmed) return false
+      }
+
+      try {
+        await axios.delete('/api/delete', { data: { path: itemPath } })
+        toast.success(t('Deleted {{name}}.', { name: itemName }))
+        mutate()
+        return true
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.error ||
+            t('Failed to delete {{name}}. Unlock upload/write access first if needed.', { name: itemName })
+        )
+        return false
+      }
+    }
+
+    const handleItemDelete = (itemPath: string, itemName: string) => () => {
+      deleteItem(itemPath, itemName)
+    }
+
+    const handleSelectedDelete = async () => {
+      const files = getFiles().filter(c => selected[c.id])
+      if (!files.length) return
+
+      const confirmed = window.confirm(
+        t('Delete {{count}} selected file(s)? They will move to the OneDrive recycle bin.', { count: files.length })
+      )
+      if (!confirmed) return
+
+      for (const file of files) {
+        await deleteItem(`${path === '/' ? '' : path}/${encodeURIComponent(file.name)}`, file.name, false)
+      }
+
+      setSelected({})
+      setTotalSelected(0)
     }
 
     // Get selected file permalink
@@ -357,6 +408,10 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
       handleFolderDownload,
       sortConfig,
       setSortConfig,
+      itemTypeFilter,
+      setItemTypeFilter,
+      handleItemDelete,
+      handleSelectedDelete,
     }
 
     return (

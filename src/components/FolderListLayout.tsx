@@ -11,6 +11,7 @@ import { humanFileSize, formatModifiedDateTime } from '../utils/fileDetails'
 
 import { Downloading, Checkbox, ChildIcon, ChildName } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
+import FolderControls from './FolderControls'
 
 const FileListItem: FC<{ fileContent: OdFolderChildren }> = ({ fileContent: c }) => {
   return (
@@ -46,6 +47,10 @@ const FolderListLayout = ({
   toast,
   sortConfig,
   setSortConfig,
+  itemTypeFilter,
+  setItemTypeFilter,
+  handleItemDelete,
+  handleSelectedDelete,
 }) => {
   const clipboard = useClipboard()
   const hashedToken = getStoredToken(path)
@@ -55,40 +60,22 @@ const FolderListLayout = ({
   // Get item path from item name
   const getItemPath = (name: string) => `${path === '/' ? '' : path}/${encodeURIComponent(name)}`
 
-  const handleSort = (column: string) => {
-    if (sortConfig.by === column) {
-      setSortConfig({
-        ...sortConfig,
-        direction: sortConfig.direction === 'asc' ? 'desc' : 'asc',
-      })
-    } else {
-      setSortConfig({
-        by: column,
-        direction: 'asc',
-      })
-    }
-  }
-
   return (
     <div className="rounded bg-white shadow-sm dark:bg-gray-900 dark:text-gray-100">
       <div className="grid grid-cols-12 items-center space-x-2 border-b border-gray-900/10 px-3 dark:border-gray-500/30">
-        <div 
-          className="col-span-12 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:col-span-6 cursor-pointer hover:underline"
-          onClick={() => handleSort('name')}
-        >
-          {t('Name')} {sortConfig.by === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+        <div className="col-span-12 py-2 text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:col-span-6">
+          <FolderControls
+            sortConfig={sortConfig}
+            setSortConfig={setSortConfig}
+            itemTypeFilter={itemTypeFilter}
+            setItemTypeFilter={setItemTypeFilter}
+          />
         </div>
-        <div 
-          className="col-span-3 hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block cursor-pointer hover:underline"
-          onClick={() => handleSort('lastModifiedDateTime')}
-        >
-          {t('Last Modified')} {sortConfig.by === 'lastModifiedDateTime' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+        <div className="col-span-3 hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">
+          {t('Last Modified')}
         </div>
-        <div 
-          className="hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block cursor-pointer hover:underline"
-          onClick={() => handleSort('size')}
-        >
-          {t('Size')} {sortConfig.by === 'size' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+        <div className="hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">
+          {t('Size')}
         </div>
         <div className="hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">
           {t('Actions')}
@@ -124,6 +111,14 @@ const FolderListLayout = ({
                 <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} size="lg" />
               </button>
             )}
+            <button
+              title={t('Delete selected files')}
+              className="cursor-pointer rounded p-1.5 hover:bg-red-100 hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-white dark:hover:bg-red-900/30 disabled:dark:text-gray-600 disabled:hover:dark:bg-gray-900"
+              disabled={totalSelected === 0}
+              onClick={handleSelectedDelete}
+            >
+              <FontAwesomeIcon icon={['far', 'trash-alt']} size="lg" />
+            </button>
           </div>
         </div>
       </div>
@@ -167,6 +162,13 @@ const FolderListLayout = ({
                   <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} />
                 </span>
               )}
+              <span
+                title={t('Delete folder')}
+                className="cursor-pointer rounded px-1.5 py-1 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                onClick={handleItemDelete(getItemPath(c.name), c.name)}
+              >
+                <FontAwesomeIcon icon={['far', 'trash-alt']} />
+              </span>
             </div>
           ) : (
             <div className="hidden p-1.5 text-gray-700 dark:text-gray-400 md:flex">
@@ -189,6 +191,13 @@ const FolderListLayout = ({
               >
                 <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} />
               </a>
+              <span
+                title={t('Delete file')}
+                className="cursor-pointer rounded px-1.5 py-1 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                onClick={handleItemDelete(getItemPath(c.name), c.name)}
+              >
+                <FontAwesomeIcon icon={['far', 'trash-alt']} />
+              </span>
             </div>
           )}
           <div className="hidden p-1.5 text-gray-700 dark:text-gray-400 md:flex">

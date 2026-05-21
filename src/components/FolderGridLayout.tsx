@@ -10,6 +10,7 @@ import { getBaseUrl } from '../utils/getBaseUrl'
 import { formatModifiedDateTime } from '../utils/fileDetails'
 import { Checkbox, ChildIcon, ChildName, Downloading } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
+import FolderControls from './FolderControls'
 
 const GridItem = ({ c, path }: { c: OdFolderChildren; path: string }) => {
   // We use the generated medium thumbnail for rendering preview images (excluding folders)
@@ -73,6 +74,10 @@ const FolderGridLayout = ({
   toast,
   sortConfig,
   setSortConfig,
+  itemTypeFilter,
+  setItemTypeFilter,
+  handleItemDelete,
+  handleSelectedDelete,
 }) => {
   const clipboard = useClipboard()
   const hashedToken = getStoredToken(path)
@@ -87,21 +92,12 @@ const FolderGridLayout = ({
       <div className="flex items-center border-b border-gray-900/10 px-3 text-xs font-bold uppercase tracking-widest text-gray-600 dark:border-gray-500/30 dark:text-gray-400">
         <div className="flex-1">{t('{{count}} item(s)', { count: folderChildren.length })}</div>
         <div className="flex p-1.5 text-gray-700 dark:text-gray-400 items-center space-x-2">
-          <select
-            className="cursor-pointer rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 outline-none"
-            value={`${sortConfig.by}-${sortConfig.direction}`}
-            onChange={e => {
-              const [by, direction] = e.target.value.split('-')
-              setSortConfig({ by, direction: direction as 'asc' | 'desc' })
-            }}
-          >
-            <option value="name-asc">{t('Name (A-Z)')}</option>
-            <option value="name-desc">{t('Name (Z-A)')}</option>
-            <option value="size-asc">{t('Size (Smallest)')}</option>
-            <option value="size-desc">{t('Size (Largest)')}</option>
-            <option value="lastModifiedDateTime-asc">{t('Date (Oldest)')}</option>
-            <option value="lastModifiedDateTime-desc">{t('Date (Newest)')}</option>
-          </select>
+          <FolderControls
+            sortConfig={sortConfig}
+            setSortConfig={setSortConfig}
+            itemTypeFilter={itemTypeFilter}
+            setItemTypeFilter={setItemTypeFilter}
+          />
           <Checkbox
             checked={totalSelected}
             onChange={toggleTotalSelected}
@@ -131,6 +127,14 @@ const FolderGridLayout = ({
               <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} size="lg" />
             </button>
           )}
+          <button
+            title={t('Delete selected files')}
+            className="cursor-pointer rounded p-1.5 hover:bg-red-100 hover:text-red-600 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-white dark:hover:bg-red-900/30 disabled:dark:text-gray-600 disabled:hover:dark:bg-gray-900"
+            disabled={totalSelected === 0}
+            onClick={handleSelectedDelete}
+          >
+            <FontAwesomeIcon icon={['far', 'trash-alt']} size="lg" />
+          </button>
         </div>
       </div>
 
@@ -164,6 +168,13 @@ const FolderGridLayout = ({
                       <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} />
                     </span>
                   )}
+                  <span
+                    title={t('Delete folder')}
+                    className="cursor-pointer rounded px-1.5 py-1 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                    onClick={handleItemDelete(getItemPath(c.name), c.name)}
+                  >
+                    <FontAwesomeIcon icon={['far', 'trash-alt']} />
+                  </span>
                 </div>
               ) : (
                 <div>
@@ -190,6 +201,13 @@ const FolderGridLayout = ({
                   >
                     <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} />
                   </a>
+                  <span
+                    title={t('Delete file')}
+                    className="cursor-pointer rounded px-1.5 py-1 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                    onClick={handleItemDelete(getItemPath(c.name), c.name)}
+                  >
+                    <FontAwesomeIcon icon={['far', 'trash-alt']} />
+                  </span>
                 </div>
               )}
             </div>
