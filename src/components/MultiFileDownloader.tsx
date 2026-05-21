@@ -48,8 +48,21 @@ export function downloadBlob({ blob, name }: { blob: Blob; name: string }) {
   el.href = bUrl
   el.download = name
   el.click()
-  window.URL.revokeObjectURL(bUrl)
   el.remove()
+
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(bUrl)
+  }, 60_000)
+}
+
+async function fetchDownloadBlob(url: string): Promise<Blob> {
+  const response = await fetch(url, { credentials: 'same-origin' })
+
+  if (!response.ok) {
+    throw new Error(`Failed to download ${url}: ${response.status} ${response.statusText}`)
+  }
+
+  return response.blob()
 }
 
 /**
@@ -74,12 +87,7 @@ export async function downloadMultipleFiles({
 
   // Add selected file blobs to zip
   files.forEach(({ name, url }) => {
-    dir.file(
-      name,
-      fetch(url).then(r => {
-        return r.blob()
-      })
-    )
+    dir.file(name, fetchDownloadBlob(url))
   })
 
   // Create zip file and download it
@@ -143,10 +151,7 @@ export async function downloadTreelikeMultipleFiles({
     if (isFolder) {
       map.push({ path, dir: dir.folder(name)! })
     } else {
-      dir.file(
-        name,
-        fetch(url!).then(r => r.blob())
-      )
+      dir.file(name, fetchDownloadBlob(url!))
     }
   }
 

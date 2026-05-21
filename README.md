@@ -4,7 +4,7 @@ English | [Tieng Viet](README.vi-VN.md)
 
 VercelDrive is a Next.js and TypeScript OneDrive directory listing app for Vercel. It lets you browse, preview, share, download, and optionally upload files from a configured OneDrive directory.
 
-This repository is based on the archived `spencerwooo/VercelDrive` project from June 24, 2023, with changes for one-click Vercel deployment, server-side environment variables, Redis token storage, and upload support.
+This repository is maintained by [Astear17](https://github.com/Astear17) and builds on the archived VercelDrive codebase with changes for one-click Vercel deployment, server-side environment variables, Redis token storage, and upload support.
 
 ## Features
 
@@ -20,7 +20,6 @@ This repository is based on the archived `spencerwooo/VercelDrive` project from 
 ## Demo
 
 - Production: [2drv.vercel.app](https://2drv.vercel.app)
-- Original demo, unmaintained: [drive.swo.moe](https://drive.swo.moe)
 
 ![demo](./public/demo.png)
 
