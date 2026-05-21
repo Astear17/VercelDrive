@@ -27,3 +27,7 @@ export async function storeOdAuthTokens({
   await kv.set(`${siteConfig.kvPrefix}access_token`, accessToken, 'EX', accessTokenExpiry)
   await kv.set(`${siteConfig.kvPrefix}refresh_token`, refreshToken)
 }
+
+export async function clearOdAuthTokens(): Promise<void> {
+  await kv.del(`${siteConfig.kvPrefix}access_token`, `${siteConfig.kvPrefix}refresh_token`)
+}

@@ -39,6 +39,7 @@ import { PreviewContainer } from './previews/Containers'
 
 import FolderListLayout from './FolderListLayout'
 import FolderGridLayout from './FolderGridLayout'
+import UploadPanel from './UploadPanel'
 
 // Disabling SSR for some previews
 const EPUBPreview = dynamic(() => import('./previews/EPUBPreview'), {
@@ -167,7 +168,10 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
   const path = queryToPath(query)
 
-  const { data, error, size, setSize } = useProtectedSWRInfinite(path, `${sortConfig.by} ${sortConfig.direction}`)
+  const { data, error, size, setSize, mutate } = useProtectedSWRInfinite(
+    path,
+    `${sortConfig.by} ${sortConfig.direction}`
+  )
 
   const isLoadingInitialData = !data && !error
   const isLoadingMore = isLoadingInitialData || (size > 0 && data && typeof data[size - 1] === 'undefined')
@@ -207,7 +211,7 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   if ('folder' in responses[0]) {
     // Expand list of API returns into flattened file data
     const folderChildren = [].concat(...responses.map(r => r.folder.value)) as OdFolderObject['value']
-    
+
     const totalChildren = responses[0].folder['@odata.count'] || 1
     const percent = Math.min(100, Math.round((folderChildren.length / totalChildren) * 100))
 
@@ -358,6 +362,10 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
     return (
       <>
         <Toaster />
+
+        <div className="mb-3 flex justify-end">
+          <UploadPanel path={path} onUploaded={() => mutate()} />
+        </div>
 
         {layout.name === 'Grid' ? <FolderGridLayout {...folderProps} /> : <FolderListLayout {...folderProps} />}
 

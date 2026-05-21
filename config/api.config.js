@@ -25,7 +25,7 @@ module.exports = {
 
   // Required Microsoft Graph permissions.
   // Most users do not need to change this.
-  scope: 'user.read files.read.all offline_access',
+  scope: 'User.Read Files.ReadWrite.All offline_access',
 
   // Cache-Control header for Vercel.
   // - max-age=0: browser does not cache
