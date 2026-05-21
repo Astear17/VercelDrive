@@ -180,10 +180,10 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   const onlyOnePage = data && typeof data[0].next === 'undefined'
 
   useEffect(() => {
-    if (!isReachingEnd && !isLoadingMore) {
+    if (data && !error && !isReachingEnd && !isLoadingMore) {
       setSize(size + 1)
     }
-  }, [isReachingEnd, isLoadingMore, size, setSize])
+  }, [data, error, isReachingEnd, isLoadingMore, size, setSize])
 
   if (error) {
     // If error includes 403 which means the user has not completed initial setup, redirect to OAuth page
