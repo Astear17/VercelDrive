@@ -35,7 +35,17 @@ export function encodePath(path: string): string {
  * @returns Access token for OneDrive API
  */
 export async function getAccessToken(): Promise<string> {
-  const { accessToken, refreshToken } = await getOdAuthTokens()
+  let accessToken: unknown
+  let refreshToken: unknown
+
+  try {
+    const tokens = await getOdAuthTokens()
+    accessToken = tokens.accessToken
+    refreshToken = tokens.refreshToken
+  } catch (error) {
+    console.error('Failed to read OAuth tokens from Redis.', error)
+    throw new Error('Failed to read OAuth tokens from Redis. Check REDIS_URL and redeploy.')
+  }
 
   // Return in storage access token if it is still valid
   if (typeof accessToken === 'string') {
@@ -57,11 +67,17 @@ export async function getAccessToken(): Promise<string> {
   body.append('refresh_token', refreshToken)
   body.append('grant_type', 'refresh_token')
 
-  const resp = await axios.post(apiConfig.authApi, body, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  })
+  let resp
+  try {
+    resp = await axios.post(apiConfig.authApi, body, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+  } catch (error) {
+    console.error('Failed to refresh Microsoft Graph access token.', error)
+    throw new Error('Failed to refresh Microsoft Graph access token. Reset OAuth tokens and authenticate again.')
+  }
 
   if ('access_token' in resp.data && 'refresh_token' in resp.data) {
     const { expires_in, access_token, refresh_token } = resp.data
@@ -200,7 +216,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
-  const accessToken = await getAccessToken()
+  let accessToken = ''
+  try {
+    accessToken = await getAccessToken()
+  } catch (error: any) {
+    res.status(500).json({ error: error?.message || 'Failed to get access token.' })
+    return
+  }
 
   // Return error 403 if access_token is empty
   if (!accessToken) {
@@ -289,7 +311,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json({ file: identityData })
     return
   } catch (error: any) {
-    res.status(error?.response?.code ?? 500).json({ error: error?.response?.data ?? 'Internal server error.' })
+    const status = error?.response?.status || 500
+    const graphError = error?.response?.data?.error
+    const message = graphError?.message || error?.response?.data || error?.message || 'Internal server error.'
+
+    console.error('Failed to fetch OneDrive item.', {
+      status,
+      code: graphError?.code,
+      message,
+      path: cleanPath,
+    })
+
+    res.status(status).json({ error: message, code: graphError?.code })
     return
   }
 }

@@ -16,7 +16,10 @@ export async function fetcher([url, token]: [url: string, token?: string]): Prom
         : axios.get(url))
     ).data
   } catch (err: any) {
-    throw { status: err.response.status, message: err.response.data }
+    throw {
+      status: err?.response?.status || 500,
+      message: err?.response?.data || err?.message || 'Request failed.',
+    }
   }
 }
 
@@ -42,6 +45,8 @@ export function useProtectedSWRInfinite(path: string = '', sort: string = '') {
     // First page with no prevPageData
     if (pageIndex === 0) return [`/api/?path=${path}${sort ? `&sort=${sort}` : ''}`, hashedToken]
 
+    if (!previousPageData?.next) return null
+
     // Add nextPage token to API endpoint
     return [`/api/?path=${path}&next=${previousPageData.next}${sort ? `&sort=${sort}` : ''}`, hashedToken]
   }
@@ -52,6 +57,7 @@ export function useProtectedSWRInfinite(path: string = '', sort: string = '') {
     revalidateIfStale: false,
     revalidateOnFocus: false,
     revalidateOnReconnect: true,
+    shouldRetryOnError: false,
   }
   return useSWRInfinite(getNextKey, fetcher, revalidationOptions)
 }
