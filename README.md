@@ -1,8 +1,8 @@
 # VercelDrive
 
-English | [Tiếng Việt](README.vi-VN.md)
+English | [Tieng Viet](README.vi-VN.md)
 
-VercelDrive is a Next.js and TypeScript OneDrive directory listing app for Vercel. It lets you browse, preview, share, download, and upload files from a configured OneDrive directory.
+VercelDrive is a Next.js and TypeScript OneDrive directory listing app for Vercel. It lets you browse, preview, share, download, and optionally upload files from a configured OneDrive directory.
 
 This repository is based on the archived `spencerwooo/VercelDrive` project from June 24, 2023, with changes for one-click Vercel deployment, server-side environment variables, Redis token storage, and upload support.
 
@@ -11,7 +11,7 @@ This repository is based on the archived `spencerwooo/VercelDrive` project from 
 - Public OneDrive folder browsing
 - File preview, sharing, and direct download links
 - Optional protected routes with `.password` files
-- File and folder uploads to the current folder
+- Optional file and folder uploads to the current folder
 - Drag-and-drop upload where supported by the browser
 - Large-file uploads through Microsoft Graph upload sessions
 - Raw iPhone Live Photo component uploads, including HEIC/HEIF and MOV files
@@ -24,15 +24,16 @@ This repository is based on the archived `spencerwooo/VercelDrive` project from 
 
 ![demo](./public/demo.png)
 
-## Microsoft Graph Permissions
+## Setup Mode
 
-Your Azure App Registration must use delegated Microsoft Graph permissions:
+Choose the permission model before creating your Microsoft Entra App Registration and deploying to Vercel.
 
-- `User.Read`
-- `Files.ReadWrite.All`
-- `offline_access`
+| Mode | Best for | Microsoft Graph delegated permissions | Upload variables |
+| --- | --- | --- | --- |
+| Read-only | Public browsing, previews, sharing, and downloads only | `User.Read`, `Files.Read.All`, `offline_access` | Do not set `UPLOAD_PASSWORD` |
+| Read/write | Browsing plus browser uploads and folder creation | `User.Read`, `Files.ReadWrite.All`, `offline_access` | Set `UPLOAD_PASSWORD`; optionally set `UPLOAD_CONFLICT_BEHAVIOR` |
 
-Older deployments that used a read-only file permission must be upgraded to `Files.ReadWrite.All`. After changing permissions, clear the old OAuth tokens from Redis/KV and authenticate again so the app receives a fresh token with write access.
+If you start with read-only and later enable uploads, update the app permission to `Files.ReadWrite.All`, clear the old Redis/KV OAuth tokens, redeploy, and authenticate again. Existing tokens keep their old scope until they are replaced.
 
 ## Deploy To Vercel
 
@@ -43,15 +44,27 @@ Prepare these values before deploying:
 - `BASE_DIRECTORY`
 - `CLIENT_ID`
 - `CLIENT_SECRET`
-- `UPLOAD_PASSWORD`
+- `REDIS_URL` after connecting Redis
+- `UPLOAD_PASSWORD` only when using read/write mode
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+### Read-only deployment
 
-Optional deployment variants:
+Use this when you only want visitors to browse, preview, share, and download files.
+
+[![Deploy read-only with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+
+### Read/write deployment with uploads
+
+Use this when you want authorized users to upload files or folders from the browser.
+
+[![Deploy with uploads on Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+
+### Optional deployment variants
 
 - Add `NEXT_PUBLIC_PROTECTED_ROUTES` if some folders require password access.
 - Add `KV_PREFIX` if multiple deployments share the same Redis database.
-- Add both variables when using protected folders across multiple deployments.
+- Add `NEXT_PUBLIC_EMAIL` if you want a contact link in the header.
+- Add `UPLOAD_CONFLICT_BEHAVIOR` in read/write mode to control duplicate upload names. Supported values are `rename`, `replace`, and `fail`.
 
 After the first deploy, connect Redis. Upstash Redis is a common choice on Vercel because the integration can inject `REDIS_URL` automatically. Redeploy after `REDIS_URL` is available, then open the site and complete the OAuth flow.
 
@@ -59,28 +72,35 @@ After the first deploy, connect Redis. Upstash Redis is a common choice on Verce
 
 ### Required
 
-| Name                     | Description                                                   | Example                 |
-| ------------------------ | ------------------------------------------------------------- | ----------------------- |
-| `NEXT_PUBLIC_SITE_TITLE` | Site title shown in the UI                                    | `2Drive`                |
-| `USER_PRINCIPAL_NAME`    | OneDrive account to access                                    | `example@outlook.com`   |
-| `BASE_DIRECTORY`         | Root OneDrive directory exposed by the site                   | `/` or `/Public Drive`  |
-| `CLIENT_ID`              | Azure App Registration client ID                              | Azure application ID    |
-| `CLIENT_SECRET`          | AES-obfuscated Azure client secret used by this project       | See upstream setup docs |
-| `REDIS_URL`              | Redis connection string for OAuth token storage               | Upstash Redis URL       |
-| `UPLOAD_PASSWORD`        | Server-only password required before any upload action starts | A strong private value  |
+| Name | Description | Example |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_TITLE` | Site title shown in the UI. This value is public in the browser bundle. | `2Drive` |
+| `USER_PRINCIPAL_NAME` | OneDrive account to access. | `example@outlook.com` |
+| `BASE_DIRECTORY` | Root OneDrive directory exposed by the site. | `/` or `/Public Drive` |
+| `CLIENT_ID` | Microsoft Entra App Registration client ID. | Azure application ID |
+| `CLIENT_SECRET` | AES-obfuscated Azure client secret used by this project. | See documentation |
+| `REDIS_URL` | Redis connection string for OAuth token storage. | Upstash Redis URL |
+
+### Required only for read/write uploads
+
+| Name | Description | Example |
+| --- | --- | --- |
+| `UPLOAD_PASSWORD` | Server-only password required before any upload action starts. | A strong private value |
 
 ### Optional
 
-| Name                           | Description                                   | Example                        |
-| ------------------------------ | --------------------------------------------- | ------------------------------ |
-| `NEXT_PUBLIC_PROTECTED_ROUTES` | Comma-separated protected folder paths        | `/private,/family`             |
-| `NEXT_PUBLIC_EMAIL`            | Contact email shown in the header             | `admin@example.com`            |
-| `KV_PREFIX`                    | Redis key prefix for shared Redis databases   | `drive1_`                      |
-| `UPLOAD_CONFLICT_BEHAVIOR`     | OneDrive conflict behavior for uploaded files | `rename`, `replace`, or `fail` |
+| Name | Description | Example |
+| --- | --- | --- |
+| `NEXT_PUBLIC_PROTECTED_ROUTES` | Comma-separated protected folder paths. | `/private,/family` |
+| `NEXT_PUBLIC_EMAIL` | Contact email shown in the header. | `admin@example.com` |
+| `KV_PREFIX` | Redis key prefix for shared Redis databases. | `drive1_` |
+| `UPLOAD_CONFLICT_BEHAVIOR` | OneDrive conflict behavior for uploaded files. | `rename`, `replace`, or `fail` |
 
-Do not prefix `UPLOAD_PASSWORD`, `CLIENT_SECRET`, Redis values, or Microsoft tokens with `NEXT_PUBLIC_`. Values with that prefix are included in the browser bundle.
+Do not prefix `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `CLIENT_ID`, `CLIENT_SECRET`, `REDIS_URL`, `UPLOAD_PASSWORD`, Redis values, or Microsoft tokens with `NEXT_PUBLIC_`. Values with that prefix are included in the browser bundle.
 
 ## Uploads
+
+Uploads require read/write mode, `Files.ReadWrite.All`, and `UPLOAD_PASSWORD`.
 
 The upload button appears in folder views. After entering the upload password, users can:
 
@@ -101,7 +121,7 @@ To preserve a Live Photo, upload both original components together. The safest o
 
 ## Existing Deployment Migration
 
-Existing deployments will not automatically receive the new write permission. Choose one migration path.
+Existing read-only deployments will not automatically receive write permission. Choose one migration path.
 
 ### Option A: Update The Current Azure App
 
@@ -129,12 +149,12 @@ An upload-authorized admin can also call `POST /api/upload/reset-auth-tokens` to
 
 ## Troubleshooting
 
-- **Upload says permission denied:** confirm `Files.ReadWrite.All` is configured, consent is granted if needed, old Redis tokens were cleared, and OAuth was completed again.
-- **The site still behaves as read-only:** delete the Redis/KV `access_token` and `refresh_token` keys, including `KV_PREFIX` when configured.
-- **Folder upload is unavailable:** use a Chromium-based browser for folder picker support. Other browsers may support only file selection.
-- **A Live Photo uploaded as only an image:** select both the HEIC/HEIF image and MOV video, or upload the full export folder.
-- **Large upload failed:** retry from a stable connection. Upload sessions can expire, and Microsoft Graph can throttle long-running uploads.
-- **Local build shows Redis connection warnings:** configure `REDIS_URL` locally or ignore the warnings when only validating the static build.
+- Upload says permission denied: confirm `Files.ReadWrite.All` is configured, consent is granted if needed, old Redis tokens were cleared, and OAuth was completed again.
+- The site still behaves as read-only: delete the Redis/KV `access_token` and `refresh_token` keys, including `KV_PREFIX` when configured.
+- Folder upload is unavailable: use a Chromium-based browser for folder picker support. Other browsers may support only file selection.
+- A Live Photo uploaded as only an image: select both the HEIC/HEIF image and MOV video, or upload the full export folder.
+- Large upload failed: retry from a stable connection. Upload sessions can expire, and Microsoft Graph can throttle long-running uploads.
+- Local build shows Redis connection warnings: configure `REDIS_URL` locally or ignore the warnings when only validating the static build.
 
 ## Security Notes
 
@@ -158,9 +178,9 @@ npx pnpm@8 install --frozen-lockfile
 npx pnpm@8 build
 ```
 
-## Upstream Documentation
+## Documentation
 
-Original project documentation is available at [ovi.swo.moe/docs/getting-started](https://ovi.swo.moe/docs/getting-started).
+Project documentation is available at [2drv-docs.vercel.app](https://2drv-docs.vercel.app).
 
 ## License
 
