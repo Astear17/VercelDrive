@@ -113,7 +113,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: any) {
     const status = error?.response?.status || 500
     const graphError = error?.response?.data?.error
+    const code = graphError?.code
     const message = graphError?.message || error?.response?.data || 'Failed to create upload session.'
-    res.status(status).json({ error: message, code: graphError?.code })
+
+    if (status === 403 || code === 'accessDenied' || /access denied/i.test(String(message))) {
+      res.status(403).json({
+        error:
+          'Microsoft Graph denied upload access. Add delegated permission Files.ReadWrite.All, grant consent if required, reset stored OAuth tokens, then authenticate VercelDrive again.',
+        code: code || 'accessDenied',
+        graphMessage: message,
+      })
+      return
+    }
+
+    res.status(status).json({ error: message, code })
   }
 }

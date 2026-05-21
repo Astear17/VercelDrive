@@ -80,6 +80,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
   const [password, setPassword] = useState('')
   const [items, setItems] = useState<UploadItem[]>([])
   const [dragActive, setDragActive] = useState(false)
+  const [resettingTokens, setResettingTokens] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const abortControllers = useRef<Record<string, AbortController>>({})
@@ -215,6 +216,27 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
     }
   }
 
+  const resetAuthTokens = async () => {
+    setResettingTokens(true)
+    try {
+      await axios.post('/api/upload/reset-auth-tokens')
+      toast.success('OAuth tokens reset. Open the site again and complete authentication with read/write permission.')
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Failed to reset OAuth tokens.')
+    } finally {
+      setResettingTokens(false)
+    }
+  }
+
+  const hasGraphPermissionError = items.some(
+    item =>
+      item.status === 'failed' &&
+      item.error &&
+      (/Files\.ReadWrite\.All/i.test(item.error) ||
+        /Microsoft Graph denied upload access/i.test(item.error) ||
+        /Access denied/i.test(item.error))
+  )
+
   return (
     <>
       <button
@@ -271,6 +293,23 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
             </div>
 
             <div className="space-y-4 p-4">
+              {hasGraphPermissionError && (
+                <div className="rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-100">
+                  <div className="font-medium">Upload permission needs to be refreshed.</div>
+                  <p className="mt-1">
+                    Add delegated Microsoft Graph permission <code>Files.ReadWrite.All</code> in Azure, grant consent if
+                    your tenant requires it, reset stored OAuth tokens, then authenticate VercelDrive again.
+                  </p>
+                  <button
+                    className="mt-3 rounded bg-yellow-900 px-3 py-1.5 text-white hover:bg-yellow-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={resettingTokens}
+                    onClick={resetAuthTokens}
+                  >
+                    {resettingTokens ? 'Resetting...' : 'Reset OAuth tokens'}
+                  </button>
+                </div>
+              )}
+
               <div
                 className={`rounded border border-dashed p-6 text-center ${
                   dragActive
