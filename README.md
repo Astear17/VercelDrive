@@ -1,146 +1,166 @@
-# VercelDrive (One-Click Deploy Version)
+# VercelDrive
 
-This project is a clone from [spencerwooo/VercelDrive](https://github.com/spencerwooo/VercelDrive), based on the archived version from the original author dated June 24, 2023. It includes some minor modifications that allow you to deploy it on Vercel for free, showcasing, sharing, previewing, downloading, and uploading your OneDrive files on a webpage. For specific deployment methods, please refer to the instructions below.
+English | [Tiếng Việt](README.vi-VN.md)
 
-## Modifications
+VercelDrive is a Next.js and TypeScript OneDrive directory listing app for Vercel. It lets you browse, preview, share, download, and upload files from a configured OneDrive directory.
 
-- Some variables that needed to be set in the `api.config.js` and `site.config.js` configuration files in the `config/` are now set in the environment variables of Vercel. In this way, you can directly click the one-click deployment button in this document, enter the values of the environment variables during the deployment process, and then complete the deployment.
+This repository is based on the archived `spencerwooo/VercelDrive` project from June 24, 2023, with changes for one-click Vercel deployment, server-side environment variables, Redis token storage, and upload support.
 
-> In this version, some sensitive variables are set using environment variables with prefixes other than `NEXT_PUBLIC_`. This is done to prevent casual website visitors from easily obtaining your OneDrive account, ClientID, and ClientSecret information.
+## Features
 
-- Additionally, this version is set to automatically close the OAuth authentication channel after OAuth authentication is completed. This is to prevent malicious individuals from easily obtaining user configuration information through the OAuth authentication URL link.
-- Latest commit for this is fixing src/components/previews/VideoPreview.tsx to giving an error which push up to `pnpm install exited with exitcode 1`. I have fixed this at [15c685c](https://github.com/Astear17/VercelDrive/commit/15c685c06ff223d58e8d5f7eebf61a74fccde8e6) and removing every single `\` form the code, which cause up 404 on HTML even if the server did response normally.
+- Public OneDrive folder browsing
+- File preview, sharing, and direct download links
+- Optional protected routes with `.password` files
+- File and folder uploads to the current folder
+- Drag-and-drop upload where supported by the browser
+- Large-file uploads through Microsoft Graph upload sessions
+- Raw iPhone Live Photo component uploads, including HEIC/HEIF and MOV files
+- Server-side upload password gate with short-lived upload authorization
 
 ## Demo
 
-The [Production](https://2drv.vercel.app) of this One-Click Deploy version. | The [Demo](https://drive.swo.moe) (UNMAINTAINED) by the original author.
+- Production: [2drv.vercel.app](https://2drv.vercel.app)
+- Original demo, unmaintained: [drive.swo.moe](https://drive.swo.moe)
 
 ![demo](./public/demo.png)
 
-## Getting Started
+## Microsoft Graph Permissions
 
-### Preparations
+Your Azure App Registration must use delegated Microsoft Graph permissions:
 
-1. **Setting up the API permissions for your OneDrive account.**
+- `User.Read`
+- `Files.ReadWrite.All`
+- `offline_access`
 
-- This project retrieves the file list and download links by calling OneDrive's API, so setting up the API permissions for your OneDrive account is essential. Please refer to the [docs about seting up the API](https://ovi.swo.moe/docs/advanced#register-a-new-application).
+Older deployments that used a read-only file permission must be upgraded to `Files.ReadWrite.All`. After changing permissions, clear the old OAuth tokens from Redis/KV and authenticate again so the app receives a fresh token with write access.
 
-> The three API permissions that need to be set up are: `User.Read`, `Files.ReadWrite.All`, `offline_access`.
+## Deploy To Vercel
 
-> Current upload-enabled deployments require delegated Microsoft Graph permissions: `User.Read`, `Files.ReadWrite.All`, `offline_access`. Update any older read-only file permission to `Files.ReadWrite.All`, then re-authenticate the site.
+Prepare these values before deploying:
 
-2. **Prepare the five [necessary environmental variables (click to view)](#necessary-variables) to be filled in during deployment on Vercel.**
+- `NEXT_PUBLIC_SITE_TITLE`
+- `USER_PRINCIPAL_NAME`
+- `BASE_DIRECTORY`
+- `CLIENT_ID`
+- `CLIENT_SECRET`
+- `UPLOAD_PASSWORD`
 
-### Deploying to Vercel
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
 
-3. **Once you're prepared, you can click the button below to deploy:**
+Optional deployment variants:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+- Add `NEXT_PUBLIC_PROTECTED_ROUTES` if some folders require password access.
+- Add `KV_PREFIX` if multiple deployments share the same Redis database.
+- Add both variables when using protected folders across multiple deployments.
 
-> - If you have folders that need password protection.
->
-> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,NEXT_PUBLIC_PROTECTED_ROUTES,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `NEXT_PUBLIC_PROTECTED_ROUTES`
->
-> - If you have multiple OneDrive accounts that need to use the same Redis database.
->
-> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,KV_PREFIX&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `KV_PREFIX`
->
-> - If you need to deploy multiple OneDrive-Index, and all have folders that need password protection.
->
-> [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,NEXT_PUBLIC_PROTECTED_ROUTES,CLIENT_ID,CLIENT_SECRET,KV_PREFIX&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install) with `NEXT_PUBLIC_PROTECTED_ROUTES` & `KV_PREFIX`
-
-4. **After the initial successful deployment, the deployed page will return a 404 error because we still need to connect to the Redis database.**
-
-> `REDIS_URL`:If you are encountering Redis database for the first time, I strongly recommend using Upstash, which is free and deeply integrated with Vercel. For details, refer to [Vercel Integration](https://docs.upstash.com/redis/howto/vercelintegration). Follow the instructions to set it up in Vercel's [Upstash Integration](https://vercel.com/integrations/upstash)(simply create a new database in the `Redis` of Upstash, then create a new integration in `Vercel Integrations`, and associate the just deployed OneDrive-Index project with the Redis database), it will automatically fill in the environment variables after project deployment.
-
-5. **After `REDIS_URL` is successfully set, redeploy the project again.**
-
-6. **After successful deployment, when you visit your `VercelDrive` page for the first time, it will guide you to perform OAuth authentication (quite simple). For details, please refer to the [Instructions](https://ovi.swo.moe/zh/docs/getting-started#authentication) written by the original author.**
+After the first deploy, connect Redis. Upstash Redis is a common choice on Vercel because the integration can inject `REDIS_URL` automatically. Redeploy after `REDIS_URL` is available, then open the site and complete the OAuth flow.
 
 ## Environment Variables
 
-### Necessary Variables
+### Required
 
-| Name                     | Description                                                   | Original Path           | Note                                                                                                                                                                                                                                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_TITLE` | Title of the display page                                     | `config/site.config.js` | e.g. 2Drive                                                                                                                                                                                                                                                                                                                                    |
-| `USER_PRINCIPAL_NAME`    | Your OneDrive account                                         | `config/site.config.js` | `example@outlook.com`                                                                                                                                                                                                                                                                                                                          |
-| `BASE_DIRECTORY`         | The OneDrive directory you want to share                      | `config/site.config.js` | `/directory name`, root directory is `/`                                                                                                                                                                                                                                                                                                       |
-| `CLIENT_ID`              | The client ID of the app you registered in Microsoft Azure    | `config/api.config.js`  | The one provided by the original author has expired, it is recommended to register one yourself, the validity period can be set to two years (anyway, you have to set the API permissions of the account, by the way). The acquisition method refers to the [DOCS](https://ovi.swo.moe/docs/advanced#using-your-own-clientid-and-clientsecret) |
-| `CLIENT_SECRET`          | The client secret of the app registered in Microsoft Azure    | `config/api.config.js`  | The acquisition method is the same, especially note that this **needs to encrypt the original secret with AES** (can be done in the [DOCS](https://ovi.swo.moe/docs/advanced#modify-configs-in-apiconfigjs))                                                                                                                                   |
-| `UPLOAD_PASSWORD`        | Server-only password required before upload actions can start | -                       | Do not use `NEXT_PUBLIC_`; use a long private password                                                                                                                                                                                                                                                                                         |
+| Name                     | Description                                                   | Example                 |
+| ------------------------ | ------------------------------------------------------------- | ----------------------- |
+| `NEXT_PUBLIC_SITE_TITLE` | Site title shown in the UI                                    | `2Drive`                |
+| `USER_PRINCIPAL_NAME`    | OneDrive account to access                                    | `example@outlook.com`   |
+| `BASE_DIRECTORY`         | Root OneDrive directory exposed by the site                   | `/` or `/Public Drive`  |
+| `CLIENT_ID`              | Azure App Registration client ID                              | Azure application ID    |
+| `CLIENT_SECRET`          | AES-obfuscated Azure client secret used by this project       | See upstream setup docs |
+| `REDIS_URL`              | Redis connection string for OAuth token storage               | Upstash Redis URL       |
+| `UPLOAD_PASSWORD`        | Server-only password required before any upload action starts | A strong private value  |
 
-### Optional Variables
+### Optional
 
-| Name                           | Description                                       | Original Path           | Note                                                                                                                                                                                               |
-| ------------------------------ | ------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_PROTECTED_ROUTES` | The path of the folder that needs password access | `config/site.config.js` | Format: `/route1,/route2`, multiple paths are separated by `,`                                                                                                                                     |
-| `NEXT_PUBLIC_EMAIL`            | Contact Email displayed in the upper right corner | `config/site.config.js` | `example@example.com`                                                                                                                                                                              |
-| `KV_PREFIX`                    | Prefix for KV storage (key-value pair storage)    | `config/site.config.js` | Upstash only provides a free `Redis` database, if you want to deploy multiple OneDrive-Index, you can set different `KV_PREFIX` values for different Index, so there will be no key value conflict |
-| `UPLOAD_CONFLICT_BEHAVIOR`     | OneDrive upload conflict behavior                 | -                       | `rename` (default), `replace`, or `fail`                                                                                                                                                           |
+| Name                           | Description                                   | Example                        |
+| ------------------------------ | --------------------------------------------- | ------------------------------ |
+| `NEXT_PUBLIC_PROTECTED_ROUTES` | Comma-separated protected folder paths        | `/private,/family`             |
+| `NEXT_PUBLIC_EMAIL`            | Contact email shown in the header             | `admin@example.com`            |
+| `KV_PREFIX`                    | Redis key prefix for shared Redis databases   | `drive1_`                      |
+| `UPLOAD_CONFLICT_BEHAVIOR`     | OneDrive conflict behavior for uploaded files | `rename`, `replace`, or `fail` |
+
+Do not prefix `UPLOAD_PASSWORD`, `CLIENT_SECRET`, Redis values, or Microsoft tokens with `NEXT_PUBLIC_`. Values with that prefix are included in the browser bundle.
 
 ## Uploads
 
-Authenticated upload users can click **Upload** in any folder view to upload files into the current OneDrive path. The upload panel supports normal file selection, Chromium-style folder selection with `webkitdirectory`, and drag-and-drop files/folders where the browser exposes directory entries. Folder uploads preserve the relative folder tree.
+The upload button appears in folder views. After entering the upload password, users can:
 
-Large files use Microsoft Graph upload sessions. The browser uploads chunks directly to the short-lived Graph upload URL created by the server, so Vercel does not load entire large files into memory and Microsoft access tokens stay server-side.
+- Select one or more files
+- Select a whole folder with browsers that support `webkitdirectory`
+- Drag and drop files or folders where directory drop APIs are available
+- See per-file progress, total progress, success/failure state, retry actions, and active upload cancellation
 
-Any file type is accepted. iPhone Live Photos are not converted or filtered: upload both the original HEIC/HEIF image and MOV video components from your iPhone/iCloud/Photos export, preferably by selecting the containing folder. The app sends the raw files as selected and preserves file names, extensions, folder structure, and last-modified timestamps where Microsoft Graph accepts them.
+Files are uploaded to the OneDrive folder currently open in the browser. Folder uploads preserve the relative folder tree. The app accepts every file type and does not filter by extension.
 
-Uploads are write-capable. Use a strong `UPLOAD_PASSWORD`, keep deployments private/admin-only where possible, and remember that the existing public browsing behavior remains public unless protected routes are configured.
+Large files use Microsoft Graph upload sessions. The server creates the session using the stored Microsoft access token, then the browser uploads chunks directly to the short-lived Graph upload URL. This keeps Microsoft access tokens server-side and avoids buffering full files in Vercel functions.
+
+## iPhone Live Photos
+
+iPhone Live Photos are usually exported as paired media files, commonly a HEIC or HEIF image plus a MOV video. VercelDrive does not convert, compress, rename, or strip metadata from selected files.
+
+To preserve a Live Photo, upload both original components together. The safest option is to select the exported folder from iCloud, Photos, or the iPhone file export so the HEIC/HEIF and MOV files are uploaded with their original names and relative paths.
 
 ## Existing Deployment Migration
 
-Existing deployed VercelDrive sites have read-only OAuth tokens. After enabling uploads, old tokens must be invalidated and the site must complete OAuth again with the new write scope.
+Existing deployments will not automatically receive the new write permission. Choose one migration path.
 
-Option A: reconfigure the current Azure App Registration.
+### Option A: Update The Current Azure App
 
-1. Open Azure Portal and select the existing App Registration.
-2. Add delegated Microsoft Graph permission `Files.ReadWrite.All`.
-3. Keep `User.Read` and `offline_access`.
-4. Grant/admin-consent if your tenant requires it.
-5. Regenerate the client secret if needed, then update `CLIENT_SECRET` in Vercel if it changes.
-6. Add `UPLOAD_PASSWORD` and optionally `UPLOAD_CONFLICT_BEHAVIOR`.
-7. Clear old Redis/KV OAuth keys so the app forces fresh OAuth. Delete `<KV_PREFIX>access_token` and `<KV_PREFIX>refresh_token` from Redis, or authenticate as an upload user and POST `/api/upload/reset-auth-tokens`.
-8. Redeploy and re-authenticate when the site opens.
+1. Open Azure Portal.
+2. Open the existing App Registration.
+3. Add delegated Microsoft Graph permission `Files.ReadWrite.All`.
+4. Keep `User.Read` and `offline_access`.
+5. Grant admin consent if your tenant requires it.
+6. Regenerate the client secret if needed.
+7. Update Vercel environment variables if the secret changed.
+8. Add `UPLOAD_PASSWORD` and optionally `UPLOAD_CONFLICT_BEHAVIOR`.
+9. Clear the old Redis/KV OAuth keys: `<KV_PREFIX>access_token` and `<KV_PREFIX>refresh_token`.
+10. Redeploy and authenticate again.
 
-Option B: create a new Azure App Registration.
+An upload-authorized admin can also call `POST /api/upload/reset-auth-tokens` to clear stored OAuth tokens.
 
-1. Add the redirect URI used by the current VercelDrive OAuth callback.
-2. Add delegated permissions: `User.Read`, `Files.ReadWrite.All`, `offline_access`.
-3. Create a new client secret.
-4. Update Vercel environment variables: `CLIENT_ID`, `CLIENT_SECRET`, `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `REDIS_URL` if needed, and `UPLOAD_PASSWORD`.
-5. Redeploy and re-authenticate when the site opens.
+### Option B: Create A New Azure App
 
-## Upload Troubleshooting
+1. Create a new Azure App Registration.
+2. Add the redirect URI used by the VercelDrive OAuth flow.
+3. Add delegated permissions: `User.Read`, `Files.ReadWrite.All`, `offline_access`.
+4. Create a new client secret.
+5. Update Vercel variables: `CLIENT_ID`, `CLIENT_SECRET`, `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `REDIS_URL` if needed, and `UPLOAD_PASSWORD`.
+6. Redeploy and authenticate again.
 
-- **Upload says permission denied:** confirm the Azure app has `Files.ReadWrite.All`, consent was granted if required, and the site has re-authenticated after the permission change.
-- **Old deployment still has read-only token:** delete the Redis/KV `access_token` and `refresh_token` keys, including `KV_PREFIX` if configured, then OAuth again.
-- **Folder upload not available:** use a Chromium-based browser for the folder picker. Other browsers may still support file uploads but not recursive folder selection.
-- **Live Photo uploaded as only image:** select both original files from the export, usually `.HEIC`/`.HEIF` plus `.MOV`, or select the whole export folder.
-- **Large upload failed on Vercel:** retry from a stable connection. The app uses Graph upload sessions, but the session URL can expire and Graph may throttle very large or long-running uploads.
+## Troubleshooting
 
-## Documentation
+- **Upload says permission denied:** confirm `Files.ReadWrite.All` is configured, consent is granted if needed, old Redis tokens were cleared, and OAuth was completed again.
+- **The site still behaves as read-only:** delete the Redis/KV `access_token` and `refresh_token` keys, including `KV_PREFIX` when configured.
+- **Folder upload is unavailable:** use a Chromium-based browser for folder picker support. Other browsers may support only file selection.
+- **A Live Photo uploaded as only an image:** select both the HEIC/HEIF image and MOV video, or upload the full export folder.
+- **Large upload failed:** retry from a stable connection. Upload sessions can expire, and Microsoft Graph can throttle long-running uploads.
+- **Local build shows Redis connection warnings:** configure `REDIS_URL` locally or ignore the warnings when only validating the static build.
 
-**For more usage methods, please refer to the [DOCS](https://ovi.swo.moe/docs/getting-started) written by the original author.**
+## Security Notes
 
-## Security Risks
+Enabling upload makes the site write-capable. Use a strong `UPLOAD_PASSWORD`, restrict deployment access where possible, and do not expose secrets through `NEXT_PUBLIC_` environment variables.
 
-- In the archived version of the original author, the `userPrincipalName`, `clientId`, and `obfuscatedClientSecret` of the OneDrive account of the deployer are exposed in the source code of the web page.
+Upload authorization is checked server-side on every upload API request. The browser UI is not the security boundary.
 
-> This version checks whether authentication has already been passed when performing the OAuth authentication process. If it has, it redirects to the homepage, otherwise, it proceeds with the OAuth authentication process. It attempts to prevent individuals with malicious intent from obtaining the values of `clientId` and `obfuscatedClientSecret` through the link address of OAuth authentication.
+## Development
 
-- Because of the design decision of Next.js, environment variables starting with `NEXT_PUBLIC_` are not only available on the server side, but also on the client side (browser). This means that any environment variable starting with `NEXT_PUBLIC_` will be included in the built JavaScript file and will be sent to the user's browser. Therefore, anyone visiting your website can view the values of these environment variables by viewing the source code of the website or network requests.
+Install dependencies and build with the package manager used by the lockfile:
 
-> This version uses non-`NEXT_PUBLIC_` prefixed environment variables for the `userPrincipalName`, `clientId`, `obfuscatedClientSecret`, and `baseDirectory` variables, making it as difficult as possible for website visitors to easily obtain your OneDrive account, ClientID, and ClientSecret information.
+```bash
+pnpm install
+pnpm build
+```
 
-## Todo List
+If your global pnpm is too new for the lockfile, use pnpm 8:
 
-- Put the password in the environment variables instead of the `.password` file.
+```bash
+npx pnpm@8 install --frozen-lockfile
+npx pnpm@8 build
+```
 
-> However, in this way, it is more difficult to set different access passwords for different encrypted directories.
+## Upstream Documentation
 
-- Redesign the LOGO. The contrast of the original LOGO is too low, and it is not consistent enough with the style of other icons and fonts on the page.
+Original project documentation is available at [ovi.swo.moe/docs/getting-started](https://ovi.swo.moe/docs/getting-started).
 
 ## License
 
@@ -151,7 +171,3 @@ Option B: create a new Azure App Registration.
 © 2023 [iRedScarf](https://github.com/iRedScarf)
 
 © 2026 [Astear17](https://github.com/Astear17)
-
-<div align="center">
-    Made by <a href="https://spencerwoo.com">spencer woo</a> | Modified by <a href="https://github.com/Astear17">Astear17
-</div>

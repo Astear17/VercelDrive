@@ -1,147 +1,173 @@
 # VercelDrive
 
-Dự án này là bản sao từ [spencerwooo/onedrive-vercel-index](https://github.com/spencerwooo/onedrive-vercel-index), dựa trên phiên bản đã được lưu trữ bởi tác giả gốc vào ngày 24/06/2023. Nó bao gồm một số chỉnh sửa nhỏ cho phép bạn triển khai miễn phí trên Vercel, dùng để trình chiếu, chia sẻ, xem trước, tải xuống và tải lên các tệp OneDrive của bạn trên một trang web. Để biết phương pháp triển khai cụ thể, vui lòng xem hướng dẫn bên dưới.
+[English](README.md) | Tiếng Việt
 
-## Các chỉnh sửa
+VercelDrive là ứng dụng liệt kê thư mục OneDrive dùng Next.js và TypeScript, có thể triển khai trên Vercel. Ứng dụng hỗ trợ duyệt thư mục, xem trước, chia sẻ, tải xuống và tải lên tệp trong thư mục OneDrive đã cấu hình.
 
-- Một số biến trước đây cần được thiết lập trong các tệp cấu hình `api.config.js` và `site.config.js` trong thư mục `config/` nay được chuyển sang thiết lập trong biến môi trường của Vercel. Nhờ đó, bạn có thể nhấn nút triển khai một-click trong tài liệu này, nhập các giá trị biến môi trường trong quá trình triển khai và hoàn tất triển khai.
-  > Trong phiên bản này, một số biến nhạy cảm được đặt bằng các biến môi trường không có tiền tố `NEXT_PUBLIC_`. Điều này nhằm tránh việc người truy cập trang web có thể dễ dàng lấy được tài khoản OneDrive, ClientID và ClientSecret của bạn.
-- Phiên bản này cũng tự động đóng kênh xác thực OAuth sau khi hoàn tất xác thực, nhằm ngăn chặn việc kẻ xấu lấy thông tin cấu hình thông qua URL xác thực OAuth.
-- Commit mới nhất sửa lỗi trong `src/components/previews/VideoPreview.tsx` gây ra lỗi `pnpm install exited with exitcode 1`. Tôi đã sửa tại commit [15c685c](https://github.com/Astear17/onedrive-vercel-index/commit/15c685c06ff223d58e8d5f7eebf61a74fccde8e6) và loại bỏ mọi ký tự `\` gây lỗi 404 trên HTML dù server phản hồi bình thường.
+Kho mã này dựa trên dự án `spencerwooo/VercelDrive` đã lưu trữ ngày 24/06/2023, kèm các thay đổi để triển khai một-click trên Vercel, dùng biến môi trường phía server, lưu OAuth token trong Redis và hỗ trợ tải lên.
+
+## Tính năng
+
+- Duyệt thư mục OneDrive công khai
+- Xem trước, chia sẻ và tải tệp trực tiếp
+- Bảo vệ một số thư mục bằng file `.password`
+- Tải tệp và thư mục lên đúng thư mục đang mở
+- Kéo-thả để tải lên nếu trình duyệt hỗ trợ
+- Tải tệp lớn bằng Microsoft Graph upload session
+- Tải nguyên bản thành phần iPhone Live Photo, gồm HEIC/HEIF và MOV
+- Chặn thao tác tải lên bằng mật khẩu phía server và quyền tải lên ngắn hạn
 
 ## Demo
 
-- Bản Production của phiên bản One-Click Deploy: https://2drv.vercel.app
-- Bản Demo (KHÔNG DUY TRÌ) của tác giả gốc: https://drive.swo.moe
-  ![demo](https://github.com/Astear17/VercelDrive/raw/main/public/demo.png)
+- Bản production: [2drv.vercel.app](https://2drv.vercel.app)
+- Demo gốc, không còn duy trì: [drive.swo.moe](https://drive.swo.moe)
 
-## Bắt đầu
+![demo](https://github.com/Astear17/VercelDrive/raw/main/public/demo.png)
 
-### Chuẩn bị
+## Quyền Microsoft Graph
 
-1. **Thiết lập quyền API cho tài khoản OneDrive của bạn.**
-   Dự án này lấy danh sách tệp và liên kết tải xuống bằng cách gọi API của OneDrive, vì vậy việc thiết lập quyền API là bắt buộc. Vui lòng xem hướng dẫn tại:  
-   https://ovi.swo.moe/docs/advanced#register-a-new-application
-   Ba quyền API cần thiết:
+Azure App Registration cần các delegated Microsoft Graph permissions sau:
 
-   - `User.Read`
-   - `Files.ReadWrite.All`
-   - `offline_access`
+- `User.Read`
+- `Files.ReadWrite.All`
+- `offline_access`
 
-   Các bản triển khai cũ dùng quyền tệp chỉ đọc phải đổi sang `Files.ReadWrite.All` và xác thực OAuth lại.
+Các deployment cũ dùng quyền chỉ đọc phải chuyển sang `Files.ReadWrite.All`. Sau khi đổi quyền, hãy xóa OAuth token cũ trong Redis/KV và xác thực lại để ứng dụng nhận token mới có quyền ghi.
 
-2. **Chuẩn bị năm biến môi trường cần thiết (nhấn để xem) để điền vào khi triển khai trên Vercel.**
+## Triển Khai Lên Vercel
 
-### Triển khai lên Vercel
+Chuẩn bị các biến sau trước khi triển khai:
 
-1. **Khi đã chuẩn bị xong, bạn có thể nhấn nút dưới đây để triển khai:**
+- `NEXT_PUBLIC_SITE_TITLE`
+- `USER_PRINCIPAL_NAME`
+- `BASE_DIRECTORY`
+- `CLIENT_ID`
+- `CLIENT_SECRET`
+- `UPLOAD_PASSWORD`
 
-   (Nút triển khai Vercel – giữ nguyên như bản gốc)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
 
-- Nếu bạn có thư mục cần bảo vệ bằng mật khẩu → dùng `NEXT_PUBLIC_PROTECTED_ROUTES`
-- Nếu bạn có nhiều tài khoản OneDrive dùng chung một Redis → dùng `KV_PREFIX`
-- Nếu bạn triển khai nhiều OneDrive-Index và tất cả đều có thư mục cần bảo vệ → dùng cả `NEXT_PUBLIC_PROTECTED_ROUTES` & `KV_PREFIX`
+Các biến tùy chọn:
 
-2. **Sau khi triển khai lần đầu, trang sẽ báo lỗi 404 vì bạn chưa kết nối Redis.**
+- Thêm `NEXT_PUBLIC_PROTECTED_ROUTES` nếu có thư mục cần mật khẩu.
+- Thêm `KV_PREFIX` nếu nhiều deployment dùng chung một Redis.
+- Thêm cả hai biến nếu nhiều deployment cùng dùng protected folders.
 
-   `REDIS_URL`: Nếu bạn mới dùng Redis lần đầu, nên dùng Upstash vì miễn phí và tích hợp sâu với Vercel.  
-   Hướng dẫn: https://docs.upstash.com/redis/howto/vercelintegration  
-   Sau khi tạo database Redis và tích hợp với Vercel, biến môi trường sẽ được tự động thêm vào.
+Sau lần deploy đầu tiên, hãy kết nối Redis. Upstash Redis thường phù hợp với Vercel vì integration có thể tự thêm `REDIS_URL`. Sau khi có `REDIS_URL`, redeploy rồi mở site để hoàn tất OAuth.
 
-3. **Sau khi thiết lập `REDIS_URL`, hãy triển khai lại dự án.**
+## Biến Môi Trường
 
-4. **Khi truy cập trang lần đầu, bạn sẽ được hướng dẫn thực hiện xác thực OAuth.**  
-   Xem hướng dẫn của tác giả gốc: https://ovi.swo.moe/zh/docs/getting-started#authentication
+### Bắt buộc
 
-## Biến môi trường
+| Tên                      | Mô tả                                                    | Ví dụ                      |
+| ------------------------ | -------------------------------------------------------- | -------------------------- |
+| `NEXT_PUBLIC_SITE_TITLE` | Tiêu đề hiển thị trên giao diện                          | `2Drive`                   |
+| `USER_PRINCIPAL_NAME`    | Tài khoản OneDrive cần truy cập                          | `example@outlook.com`      |
+| `BASE_DIRECTORY`         | Thư mục OneDrive gốc được công khai qua site             | `/` hoặc `/Public Drive`   |
+| `CLIENT_ID`              | Client ID của Azure App Registration                     | Azure application ID       |
+| `CLIENT_SECRET`          | Client secret Azure đã được AES-obfuscate theo dự án này | Xem tài liệu gốc           |
+| `REDIS_URL`              | Chuỗi kết nối Redis để lưu OAuth token                   | Upstash Redis URL          |
+| `UPLOAD_PASSWORD`        | Mật khẩu phía server bắt buộc trước mọi thao tác tải lên | Một giá trị mạnh, riêng tư |
 
-### Biến bắt buộc
+### Tùy chọn
 
-| Tên                      | Mô tả                                    | Đường dẫn gốc           | Ghi chú                                                             |
-| ------------------------ | ---------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_TITLE` | Tiêu đề trang                            | `config/site.config.js` | Ví dụ: 2Drive                                                       |
-| `USER_PRINCIPAL_NAME`    | Tài khoản OneDrive                       | `config/site.config.js` | `example@outlook.com`                                               |
-| `BASE_DIRECTORY`         | Thư mục OneDrive muốn chia sẻ            | `config/site.config.js` | `/tên thư mục`, thư mục gốc là `/`                                  |
-| `CLIENT_ID`              | Client ID của ứng dụng Azure             | `config/api.config.js`  | Nên tự đăng ký, hạn dùng 2 năm                                      |
-| `CLIENT_SECRET`          | Client Secret của ứng dụng Azure         | `config/api.config.js`  | Cần mã hóa AES theo hướng dẫn                                       |
-| `UPLOAD_PASSWORD`        | Mật khẩu phía server để cho phép tải lên | -                       | Không dùng tiền tố `NEXT_PUBLIC_`; nên đặt mật khẩu dài và riêng tư |
+| Tên                            | Mô tả                                                   | Ví dụ                            |
+| ------------------------------ | ------------------------------------------------------- | -------------------------------- |
+| `NEXT_PUBLIC_PROTECTED_ROUTES` | Danh sách thư mục cần mật khẩu, phân tách bằng dấu phẩy | `/private,/family`               |
+| `NEXT_PUBLIC_EMAIL`            | Email liên hệ hiển thị trên header                      | `admin@example.com`              |
+| `KV_PREFIX`                    | Tiền tố Redis key khi dùng chung Redis                  | `drive1_`                        |
+| `UPLOAD_CONFLICT_BEHAVIOR`     | Cách xử lý khi tệp tải lên bị trùng tên                 | `rename`, `replace`, hoặc `fail` |
 
-### Biến tùy chọn
+Không đặt `UPLOAD_PASSWORD`, `CLIENT_SECRET`, Redis URL hay Microsoft token với tiền tố `NEXT_PUBLIC_`. Biến có tiền tố này sẽ được đóng gói vào mã JavaScript gửi xuống trình duyệt.
 
-| Tên                            | Mô tả                                  | Đường dẫn gốc           | Ghi chú                                     |
-| ------------------------------ | -------------------------------------- | ----------------------- | ------------------------------------------- |
-| `NEXT_PUBLIC_PROTECTED_ROUTES` | Đường dẫn thư mục cần mật khẩu         | `config/site.config.js` | `/route1,/route2`                           |
-| `NEXT_PUBLIC_EMAIL`            | Email liên hệ                          | `config/site.config.js` | `example@example.com`                       |
-| `KV_PREFIX`                    | Tiền tố cho kho KV                     | `config/site.config.js` | Dùng khi triển khai nhiều Index             |
-| `UPLOAD_CONFLICT_BEHAVIOR`     | Cách xử lý khi trùng tên trên OneDrive | -                       | `rename` (mặc định), `replace`, hoặc `fail` |
+## Tải Lên
 
-## Tải lên
+Nút upload xuất hiện trong giao diện thư mục. Sau khi nhập mật khẩu tải lên, người dùng có thể:
 
-Người có mật khẩu tải lên có thể nhấn **Upload** trong bất kỳ thư mục nào để tải tệp vào đúng đường dẫn OneDrive hiện tại. Bảng tải lên hỗ trợ chọn tệp, chọn thư mục bằng `webkitdirectory` trên trình duyệt Chromium, và kéo-thả tệp/thư mục nếu trình duyệt hỗ trợ đọc thư mục. Cấu trúc thư mục con được giữ nguyên.
+- Chọn một hoặc nhiều tệp
+- Chọn cả thư mục trên trình duyệt hỗ trợ `webkitdirectory`
+- Kéo-thả tệp hoặc thư mục nếu trình duyệt hỗ trợ directory drop API
+- Theo dõi tiến trình từng tệp, tiến trình tổng, trạng thái thành công/thất bại, thử lại và hủy upload đang chạy
 
-Tệp lớn dùng Microsoft Graph upload session. Trình duyệt tải từng phần lên URL Graph ngắn hạn do server tạo, nên Vercel không phải giữ toàn bộ tệp trong bộ nhớ và access token Microsoft vẫn chỉ nằm ở server.
+Tệp được tải lên đúng thư mục OneDrive đang mở trên trình duyệt. Khi tải cả thư mục, cấu trúc thư mục con được giữ nguyên. Ứng dụng chấp nhận mọi loại tệp và không lọc theo phần mở rộng.
 
-Ứng dụng chấp nhận mọi loại tệp. Với iPhone Live Photos, hãy tải lên cả hai thành phần gốc, thường là ảnh `.HEIC`/`.HEIF` và video `.MOV`, tốt nhất bằng cách chọn cả thư mục export từ iPhone/iCloud/Photos. Ứng dụng không lọc, đổi tên, nén, chuyển đổi hay xóa metadata; tên tệp, phần mở rộng, cấu trúc thư mục và thời gian sửa đổi được giữ lại khi Microsoft Graph cho phép.
+Tệp lớn dùng Microsoft Graph upload session. Server tạo upload session bằng access token Microsoft đang lưu, sau đó trình duyệt tải từng chunk trực tiếp lên Graph upload URL ngắn hạn. Cách này giữ access token ở server và tránh việc Vercel Function phải giữ toàn bộ tệp trong bộ nhớ.
 
-Bật tải lên nghĩa là website có quyền ghi vào OneDrive. Hãy dùng `UPLOAD_PASSWORD` mạnh và chỉ chia sẻ deployment cho người quản trị/người tin cậy. Duyệt công khai vẫn giữ hành vi hiện tại trừ khi bạn cấu hình protected routes.
+## iPhone Live Photos
 
-## Nâng cấp bản triển khai cũ
+iPhone Live Photos thường được export thành một cặp tệp, phổ biến là ảnh HEIC/HEIF và video MOV. VercelDrive không chuyển đổi, nén, đổi tên hay xóa metadata khỏi tệp đã chọn.
 
-Các site VercelDrive đã triển khai trước đây đang có OAuth token chỉ đọc. Sau khi bật tải lên, cần xóa token cũ và xác thực lại với quyền ghi.
+Để giữ đúng Live Photo, hãy tải lên cả hai thành phần gốc cùng nhau. Cách an toàn nhất là chọn cả thư mục export từ iCloud, Photos hoặc iPhone Files để HEIC/HEIF và MOV được tải lên với tên gốc và đường dẫn tương đối ban đầu.
 
-Cách A: chỉnh App Registration hiện tại.
+## Nâng Cấp Deployment Cũ
 
-1. Vào Azure Portal và mở App Registration đang dùng.
-2. Thêm delegated Microsoft Graph permission `Files.ReadWrite.All`.
-3. Giữ `User.Read` và `offline_access`.
-4. Grant/admin-consent nếu tenant yêu cầu.
-5. Tạo lại client secret nếu cần, rồi cập nhật `CLIENT_SECRET` trên Vercel nếu secret thay đổi.
-6. Thêm `UPLOAD_PASSWORD` và tùy chọn `UPLOAD_CONFLICT_BEHAVIOR`.
-7. Xóa token OAuth cũ trong Redis/KV để buộc đăng nhập lại. Xóa `<KV_PREFIX>access_token` và `<KV_PREFIX>refresh_token`, hoặc đăng nhập bằng mật khẩu tải lên rồi POST `/api/upload/reset-auth-tokens`.
-8. Redeploy và xác thực OAuth lại khi mở site.
+Các deployment hiện có sẽ không tự nhận quyền ghi mới. Chọn một trong hai cách sau.
 
-Cách B: tạo App Registration mới.
+### Cách A: Cập Nhật Azure App Hiện Tại
 
-1. Thêm redirect URI theo OAuth callback hiện tại của VercelDrive.
-2. Thêm delegated permissions: `User.Read`, `Files.ReadWrite.All`, `offline_access`.
-3. Tạo client secret mới.
-4. Cập nhật biến môi trường Vercel: `CLIENT_ID`, `CLIENT_SECRET`, `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `REDIS_URL` nếu cần, và `UPLOAD_PASSWORD`.
-5. Redeploy và xác thực OAuth lại khi mở site.
+1. Mở Azure Portal.
+2. Mở App Registration đang dùng.
+3. Thêm delegated Microsoft Graph permission `Files.ReadWrite.All`.
+4. Giữ `User.Read` và `offline_access`.
+5. Grant admin consent nếu tenant yêu cầu.
+6. Tạo lại client secret nếu cần.
+7. Cập nhật biến môi trường trên Vercel nếu secret thay đổi.
+8. Thêm `UPLOAD_PASSWORD` và tùy chọn `UPLOAD_CONFLICT_BEHAVIOR`.
+9. Xóa OAuth key cũ trong Redis/KV: `<KV_PREFIX>access_token` và `<KV_PREFIX>refresh_token`.
+10. Redeploy và xác thực OAuth lại.
 
-## Xử lý lỗi tải lên
+Admin đã mở khóa quyền upload cũng có thể gọi `POST /api/upload/reset-auth-tokens` để xóa OAuth token đang lưu.
 
-- **Upload báo permission denied:** kiểm tra Azure app có `Files.ReadWrite.All`, đã consent nếu cần, và site đã OAuth lại sau khi đổi quyền.
-- **Deployment cũ vẫn chỉ đọc:** xóa key Redis/KV `access_token` và `refresh_token`, có tính cả `KV_PREFIX` nếu dùng, rồi OAuth lại.
-- **Không chọn được thư mục:** dùng trình duyệt Chromium cho folder picker. Trình duyệt khác có thể chỉ hỗ trợ chọn tệp.
-- **Live Photo chỉ lên ảnh:** hãy chọn cả file gốc `.HEIC`/`.HEIF` và `.MOV`, hoặc chọn cả thư mục export.
-- **Tệp lớn lỗi trên Vercel:** thử lại với mạng ổn định. Upload session có thể hết hạn và Microsoft Graph có thể throttle các upload rất lớn hoặc kéo dài.
+### Cách B: Tạo Azure App Mới
 
-## Tài liệu
+1. Tạo Azure App Registration mới.
+2. Thêm redirect URI đang dùng trong OAuth flow của VercelDrive.
+3. Thêm delegated permissions: `User.Read`, `Files.ReadWrite.All`, `offline_access`.
+4. Tạo client secret mới.
+5. Cập nhật biến môi trường Vercel: `CLIENT_ID`, `CLIENT_SECRET`, `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `REDIS_URL` nếu cần, và `UPLOAD_PASSWORD`.
+6. Redeploy và xác thực OAuth lại.
 
-Xem thêm hướng dẫn tại: https://ovi.swo.moe/docs/getting-started
+## Xử Lý Lỗi
 
-## Rủi ro bảo mật
+- **Upload báo permission denied:** kiểm tra `Files.ReadWrite.All`, consent nếu cần, xóa Redis token cũ và OAuth lại.
+- **Site vẫn chỉ đọc:** xóa Redis/KV key `access_token` và `refresh_token`, có tính cả `KV_PREFIX` nếu đang dùng.
+- **Không chọn được thư mục:** dùng trình duyệt Chromium để có folder picker. Trình duyệt khác có thể chỉ chọn được tệp.
+- **Live Photo chỉ lên ảnh:** chọn cả ảnh HEIC/HEIF và video MOV, hoặc tải lên cả thư mục export.
+- **Tệp lớn upload thất bại:** thử lại với mạng ổn định. Upload session có thể hết hạn và Microsoft Graph có thể throttle upload kéo dài.
+- **Build local báo lỗi kết nối Redis:** cấu hình `REDIS_URL` local hoặc bỏ qua cảnh báo nếu chỉ kiểm tra static build.
 
-- Trong bản gốc, `userPrincipalName`, `clientId`, và `obfuscatedClientSecret` bị lộ trong mã nguồn trang web.
+## Ghi Chú Bảo Mật
 
-  Phiên bản này kiểm tra xem người dùng đã xác thực OAuth chưa. Nếu rồi, sẽ chuyển về trang chủ; nếu chưa, mới tiếp tục quy trình OAuth. Điều này giúp hạn chế việc lộ thông tin qua URL OAuth.
+Bật upload nghĩa là site có quyền ghi vào OneDrive. Hãy dùng `UPLOAD_PASSWORD` mạnh, hạn chế người truy cập deployment nếu có thể, và không đưa secret vào biến `NEXT_PUBLIC_`.
 
-- Do thiết kế của Next.js, biến môi trường bắt đầu bằng `NEXT_PUBLIC_` sẽ xuất hiện trên client. Vì vậy, bất kỳ ai cũng có thể xem giá trị của chúng.
+Quyền upload được kiểm tra ở server trong mọi API upload. Việc ẩn nút trên giao diện không phải là lớp bảo mật chính.
 
-  Phiên bản này dùng biến không có tiền tố `NEXT_PUBLIC_` cho `userPrincipalName`, `clientId`, `obfuscatedClientSecret`, và `baseDirectory` để giảm nguy cơ lộ thông tin.
+## Phát Triển
 
-## Danh sách việc cần làm
+Cài dependency và build bằng package manager phù hợp với lockfile:
 
-- Đưa mật khẩu vào biến môi trường thay vì file `.password`.  
-  Tuy nhiên, cách này khó đặt mật khẩu khác nhau cho từng thư mục.
+```bash
+pnpm install
+pnpm build
+```
 
-- Thiết kế lại LOGO vì logo cũ độ tương phản thấp và không đồng nhất với phong cách trang.
+Nếu pnpm global quá mới so với lockfile, dùng pnpm 8:
 
-## Giấy phép
+```bash
+npx pnpm@8 install --frozen-lockfile
+npx pnpm@8 build
+```
 
-MIT License: https://github.com/Astear17/VercelDrive/blob/main/LICENSE
+## Tài Liệu Gốc
 
-© 2021–2023 spencer woo  
-© 2023 iRedScarf  
-© 2026 Astear17  
-Được tạo bởi spencer woo | Chỉnh sửa bởi Astear17
+Tài liệu dự án gốc có tại [ovi.swo.moe/docs/getting-started](https://ovi.swo.moe/docs/getting-started).
+
+## Giấy Phép
+
+[MIT License](LICENSE)
+
+© 2021-2023 [spencer woo](https://spencerwoo.com)
+
+© 2023 [iRedScarf](https://github.com/iRedScarf)
+
+© 2026 [Astear17](https://github.com/Astear17)
