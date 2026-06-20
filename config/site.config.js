@@ -45,13 +45,11 @@ module.exports = {
   // OneDrive API limits this to 200.
   maxItems: 200,
 
-  // Google Fonts configuration.
-  // Generate fonts at https://fonts.google.com.
-  googleFontSans: 'Inter',       // Main sans-serif font
-  googleFontMono: 'Fira Mono',   // Monospace font
-  googleFontLinks: [
-    'https://fonts.googleapis.com/css2?family=Fira+Mono&family=Inter:wght@400;500;700&display=swap',
-  ],
+  // Font configuration.
+  // Geist Sans and Geist Mono are loaded locally via @font-face in globals.css.
+  googleFontSans: 'Geist',
+  googleFontMono: 'Geist Mono',
+  googleFontLinks: [],
 
   // Format for displaying dates and times (day.js format).
   datetimeFormat: 'DD-MM-YYYY HH:mm:ss',

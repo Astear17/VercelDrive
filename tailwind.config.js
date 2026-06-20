@@ -1,6 +1,5 @@
 const defaultTheme = require('tailwindcss/defaultTheme')
 const colors = require('tailwindcss/colors')
-const siteConfig = require('./config/site.config')
 
 module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
@@ -24,8 +23,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        sans: [`"${siteConfig.googleFontSans}"`, '"Noto Sans SC"', ...defaultTheme.fontFamily.sans],
-        mono: [`"${siteConfig.googleFontMono}"`, ...defaultTheme.fontFamily.mono]
+        sans: ['Geist', ...defaultTheme.fontFamily.sans],
+        mono: ['Geist Mono', ...defaultTheme.fontFamily.mono]
       },
       colors: {
         gray: {
