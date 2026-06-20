@@ -52,3 +52,32 @@ pre[class*='language-'],
 code[class*='language-'] {
   @apply font-mono !important;
 }
+
+/* Masonry grid layout for gallery view */
+.vd-masonry {
+  column-count: 2;
+  column-gap: 0.75rem;
+}
+@media (min-width: 768px) {
+  .vd-masonry {
+    column-count: 4;
+  }
+}
+@media (min-width: 1024px) {
+  .vd-masonry {
+    column-count: 5;
+  }
+}
+@media (min-width: 1280px) {
+  .vd-masonry {
+    column-count: 6;
+  }
+}
+@media (min-width: 1536px) {
+  .vd-masonry {
+    column-count: 8;
+  }
+}
+.break-inside-avoid {
+  break-inside: avoid;
+}

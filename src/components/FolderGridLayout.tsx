@@ -138,11 +138,12 @@ const FolderGridLayout = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 p-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
+      <div className="vd-masonry-wrap p-3">
+        <div className="vd-masonry">
         {folderChildren.map((c: OdFolderChildren) => (
           <div
             key={c.id}
-            className="group relative overflow-hidden rounded transition-all duration-100 hover:bg-gray-100 dark:hover:bg-gray-850"
+            className="group relative mb-3 overflow-hidden rounded break-inside-avoid transition-all duration-100 hover:bg-gray-100 dark:hover:bg-gray-850"
           >
             <div className="absolute top-0 right-0 z-10 m-1 rounded bg-white/50 py-0.5 opacity-0 transition-all duration-100 group-hover:opacity-100 dark:bg-gray-900/50">
               {c.folder ? (
@@ -231,6 +232,7 @@ const FolderGridLayout = ({
             </Link>
           </div>
         ))}
+        </div>
       </div>
     </div>
   )
