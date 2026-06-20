@@ -126,5 +126,7 @@
   "Authorization required. Enter the upload password.": "Authorization required. Enter the upload password.",
   "Delete {{name}}? This will move it to the OneDrive recycle bin.": "Delete {{name}}? This will move it to the OneDrive recycle bin.",
   "Something went wrong": "Something went wrong",
-  "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files.": "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files."
+  "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files.": "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files.",
+  "Load more": "Load more",
+  "{{loaded}} of {{total}} loaded": "{{loaded}} of {{total}} loaded"
 }

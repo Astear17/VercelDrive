@@ -24,6 +24,10 @@ import {
 } from './MultiFileDownloader'
 
 import { layouts } from './SwitchLayout'
+
+// In Grid view, auto-crawl only the first N items to reduce API pressure.
+// Remaining items load on explicit user action ("Load more").
+const GRID_AUTO_CRAWL_LIMIT = 200
 import Loading, { LoadingIcon } from './Loading'
 import FourOhFour from './FourOhFour'
 import Auth from './Auth'
@@ -188,6 +192,9 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   })
   const [itemTypeFilter, setItemTypeFilter] = useState<ItemTypeFilter>('default')
 
+  // When true, Grid view resumes full auto-crawl after the user clicks "Load more"
+  const [gridCrawlUnlocked, setGridCrawlUnlocked] = useState(false)
+
   const path = queryToPath(query)
 
   const { data, error, size, setSize, mutate } = useProtectedSWRInfinite(
@@ -203,9 +210,14 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
   useEffect(() => {
     if (data && !error && !isReachingEnd && !isLoadingMore) {
+      // In Grid view, only auto-crawl the first page (≈200 items) unless the
+      // user explicitly requested more via the "Load more" button.
+      if (layout.name === 'Grid' && !gridCrawlUnlocked && size >= 1) {
+        return
+      }
       setSize(size + 1)
     }
-  }, [data, error, isReachingEnd, isLoadingMore, size, setSize])
+  }, [data, error, isReachingEnd, isLoadingMore, size, setSize, layout.name, gridCrawlUnlocked])
 
   if (error) {
     // If error includes 403 which means the user has not completed initial setup, redirect to OAuth page
@@ -545,6 +557,22 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
               <div className="flex w-full items-center justify-center space-x-2 p-3 opacity-60">
                 <LoadingIcon className="inline-block h-4 w-4 animate-spin" />
                 <span>{t('Loading files... {{percent}}%', { percent })}</span>
+              </div>
+            )}
+            {layout.name === 'Grid' && !gridCrawlUnlocked && !isReachingEnd && !isLoadingMore && (
+              <div className="flex flex-col items-center gap-2 p-3">
+                <button
+                  className="rounded bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+                  onClick={() => setGridCrawlUnlocked(true)}
+                >
+                  {t('Load more')}
+                </button>
+                <span className="text-xs text-gray-400">
+                  {t('{{loaded}} of {{total}} loaded', {
+                    loaded: folderChildren.length,
+                    total: totalChildren,
+                  })}
+                </span>
               </div>
             )}
           </div>
