@@ -5,7 +5,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 import apiConfig from '../../../config/api.config'
 import { encodePath, getAccessToken } from '.'
-import { requireUploadAuth } from '../../utils/uploadAuth'
+import { requireUploadAuth, verifyUploadPassword, setUploadAuthCookie, hasUploadAuth, uploadPasswordConfigured } from '../../utils/uploadAuth'
+import { checkRateLimit, recordFailedAttempt, clearFailedAttempts } from '../../utils/rateLimit'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
@@ -13,11 +14,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
-  if (!requireUploadAuth(req, res)) {
+  if (!uploadPasswordConfigured()) {
+    res.status(503).json({ error: 'Upload password is not configured.' })
     return
   }
 
-  const { path } = req.body || {}
+  if (!(await checkRateLimit(req, res))) {
+    return
+  }
+
+  // Accept auth via cookie OR password in body
+  const authenticated = hasUploadAuth(req)
+  const { path, password } = req.body || {}
+
+  if (!authenticated) {
+    if (!password) {
+      res.status(401).json({ error: 'Authorization required. Provide the upload password.' })
+      return
+    }
+
+    if (!verifyUploadPassword(password)) {
+      recordFailedAttempt(req)
+      res.status(401).json({ error: 'The password is incorrect. Please try again.' })
+      return
+    }
+
+    clearFailedAttempts(req)
+    setUploadAuthCookie(res)
+  }
+
   if (typeof path !== 'string') {
     res.status(400).json({ error: 'Path is required.' })
     return
@@ -47,6 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
+    res.setHeader('Cache-Control', 'no-store')
     res.status(200).json({ ok: true })
   } catch (error: any) {
     const status = error?.response?.status || 500

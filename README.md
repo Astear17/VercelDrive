@@ -151,13 +151,29 @@ When `UPLOAD_PASSWORD` is set and the Azure app has `Files.ReadWrite.All` permis
 | Folder upload unavailable | Use a Chromium-based browser for `webkitdirectory` support |
 | Large upload failed | Retry on a stable connection; upload sessions can expire |
 | Local build shows Redis warnings | Set `REDIS_URL` locally or ignore when only validating the build |
+| Delete says authorization required | Enter the upload password when prompted |
+
+## Known Limitations
+
+- Rate limiting is in-memory per serverless instance. It resets on cold start and is not distributed across instances. For distributed rate limiting, integrate an external store.
+- The `odpt` query parameter for raw file links is deprecated but still supported for backward compatibility. Use signed URLs for new integrations.
+- OneDrive API limits folder listing to 200 items per page. Pagination is handled automatically.
+- Folder upload requires a Chromium-based browser for `webkitdirectory` API support.
 
 ## Security
 
-- Upload authorization is enforced server-side on every API request
+VercelDrive uses a layered security model. See [SECURITY.md](SECURITY.md) for full details.
+
+**Key points:**
+
+- Upload and delete authorization is enforced server-side using HMAC-signed HttpOnly cookies
+- `CLIENT_SECRET` is never exposed to the browser
+- Protected folder passwords are SHA-256 hashed client-side before transmission
+- Raw file links support short-lived signed URLs (15-minute expiry)
+- All auth endpoints are rate-limited against brute-force attacks
+- Protected content is never cached (`Cache-Control: no-store`)
 - Use a strong `UPLOAD_PASSWORD` and restrict deployment access
 - Never expose secrets via `NEXT_PUBLIC_` prefixed variables
-- Tokens stored in Redis are AES-encrypted
 
 ## Development
 

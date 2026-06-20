@@ -195,6 +195,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Set edge function caching for faster load times, check docs:
   // https://vercel.com/docs/concepts/functions/edge-caching
+  // Protected routes use no-store; public routes use short CDN cache.
   res.setHeader('Cache-Control', apiConfig.cacheControlHeader)
 
   // Sometimes the path parameter is defaulted to '[...path]' which we need to handle
@@ -238,9 +239,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
   // If message is empty, then the path is not protected.
-  // Conversely, protected routes are not allowed to serve from cache.
+  // Protected routes must never be cached.
   if (message !== '') {
-    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Cache-Control', 'no-store')
   }
 
   const requestPath = encodePath(cleanPath)
@@ -250,10 +251,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isRoot = requestPath === ''
 
   // Go for file raw download link, add CORS headers, and redirect to @microsoft.graph.downloadUrl
-  // (kept here for backwards compatibility, and cache headers will be reverted to no-cache)
+  // (kept here for backwards compatibility, and cache headers will be reverted to no-store)
   if (raw) {
     await runCorsMiddleware(req, res)
-    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Cache-Control', 'no-store')
 
     const { data } = await axios.get(requestUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },

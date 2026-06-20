@@ -13,7 +13,6 @@ import { getAccessToken } from '../api'
 
 export async function getServerSideProps({ locale }) {
   const clientId = process.env.CLIENT_ID || '';
-  const clientSecret = process.env.CLIENT_SECRET || '';
   // Get accessToken using getAccessToken function
   const accessToken = await getAccessToken();
   // If the accessToken exists, redirect to the home page
@@ -30,12 +29,11 @@ export async function getServerSideProps({ locale }) {
     props: {
       ...(await serverSideTranslations(locale, ['common'])),
       clientId,
-      clientSecret,
     },
   }
 }
 
-export default function OAuthStep1({ clientId, clientSecret }) {
+export default function OAuthStep1({ clientId }) {
   const router = useRouter()
 
   const { t } = useTranslation()
@@ -99,14 +97,6 @@ export default function OAuthStep1({ clientId, clientSecret }) {
                     </td>
                     <td className="whitespace-nowrap py-1 px-3 text-gray-500 dark:text-gray-400">
                       <code className="font-mono text-sm">{clientId}</code>
-                    </td>
-                  </tr>
-                  <tr className="border-y bg-white dark:border-gray-700 dark:bg-gray-900">
-                    <td className="bg-gray-50 py-1 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:bg-gray-800 dark:text-gray-400">
-                      CLIENT_SECRET*
-                    </td>
-                    <td className="whitespace-nowrap py-1 px-3 text-gray-500 dark:text-gray-400">
-                      <code className="font-mono text-sm">{clientSecret}</code>
                     </td>
                   </tr>
                   <tr className="border-y bg-white dark:border-gray-700 dark:bg-gray-900">

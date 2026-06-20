@@ -53,6 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
+  res.setHeader('Cache-Control', 'no-store')
+
   const { targetPath = '/', relativePath = '', size, lastModified } = req.body || {}
 
   let uploadPath

@@ -157,6 +157,24 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
     [key: string]: boolean
   }>({})
 
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    itemPath: string
+    itemName: string
+    isBatch: boolean
+    batchPaths?: { path: string; name: string }[]
+    password: string
+    error: string
+    loading: boolean
+  }>({
+    open: false,
+    itemPath: '',
+    itemName: '',
+    isBatch: false,
+    password: '',
+    error: '',
+    loading: false,
+  })
   const router = useRouter()
   const hashedToken = getStoredToken(router.asPath)
   const [layout, _] = useLocalStorage('preferredLayout', layouts[0])
@@ -294,47 +312,86 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
       }
     }
 
-    const deleteItem = async (itemPath: string, itemName: string, confirm = true) => {
-      if (confirm) {
-        const confirmed = window.confirm(
-          t('Delete {{name}}? This will move it to the OneDrive recycle bin.', { name: itemName })
-        )
-        if (!confirmed) return false
-      }
-
+    const deleteItem = async (itemPath: string, itemName: string, password?: string) => {
       try {
-        await axios.delete('/api/delete', { data: { path: itemPath } })
+        const data: Record<string, string> = { path: itemPath }
+        if (password) data.password = password
+
+        await axios.delete('/api/delete', { data })
         toast.success(t('Deleted {{name}}.', { name: itemName }))
         mutate()
         return true
       } catch (error: any) {
-        toast.error(
-          error?.response?.data?.error ||
-            t('Failed to delete {{name}}. Unlock upload/write access first if needed.', { name: itemName })
-        )
+        const status = error?.response?.status
+        const errMsg = error?.response?.data?.error || t('Failed to delete {{name}}.', { name: itemName })
+
+        if (status === 401) {
+          throw { needPassword: true, message: errMsg }
+        }
+
+        toast.error(errMsg)
         return false
       }
     }
 
     const handleItemDelete = (itemPath: string, itemName: string) => () => {
-      deleteItem(itemPath, itemName)
+      setDeleteDialog({
+        open: true,
+        itemPath,
+        itemName,
+        isBatch: false,
+        password: '',
+        error: '',
+        loading: false,
+      })
     }
 
-    const handleSelectedDelete = async () => {
+    const handleSelectedDelete = () => {
       const files = getFiles().filter(c => selected[c.id])
       if (!files.length) return
 
-      const confirmed = window.confirm(
-        t('Delete {{count}} selected file(s)? They will move to the OneDrive recycle bin.', { count: files.length })
-      )
-      if (!confirmed) return
+      const batchPaths = files.map(f => ({
+        path: `${path === '/' ? '' : path}/${encodeURIComponent(f.name)}`,
+        name: f.name,
+      }))
 
-      for (const file of files) {
-        await deleteItem(`${path === '/' ? '' : path}/${encodeURIComponent(file.name)}`, file.name, false)
+      setDeleteDialog({
+        open: true,
+        itemPath: '',
+        itemName: `${files.length} file(s)`,
+        isBatch: true,
+        batchPaths,
+        password: '',
+        error: '',
+        loading: false,
+      })
+    }
+
+    const executeDelete = async () => {
+      setDeleteDialog(d => ({ ...d, loading: true, error: '' }))
+
+      try {
+        if (deleteDialog.isBatch && deleteDialog.batchPaths) {
+          for (const item of deleteDialog.batchPaths) {
+            await deleteItem(item.path, item.name, deleteDialog.password || undefined)
+          }
+          setSelected({})
+          setTotalSelected(0)
+        } else {
+          await deleteItem(deleteDialog.itemPath, deleteDialog.itemName, deleteDialog.password || undefined)
+        }
+        setDeleteDialog(d => ({ ...d, open: false, loading: false }))
+      } catch (error: any) {
+        if (error?.needPassword) {
+          setDeleteDialog(d => ({
+            ...d,
+            loading: false,
+            error: error.message || t('Authorization required. Enter the upload password.'),
+          }))
+        } else {
+          setDeleteDialog(d => ({ ...d, open: false, loading: false }))
+        }
       }
-
-      setSelected({})
-      setTotalSelected(0)
     }
 
     // Get selected file permalink
@@ -423,6 +480,53 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
         </div>
 
         {layout.name === 'Grid' ? <FolderGridLayout {...folderProps} /> : <FolderListLayout {...folderProps} />}
+
+        {deleteDialog.open && (
+          <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-sm rounded bg-white p-4 shadow-lg dark:bg-gray-900">
+              <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {t('Confirm deletion')}
+              </h2>
+              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                {t('Delete {{name}}? This will move it to the OneDrive recycle bin.', { name: deleteDialog.itemName })}
+              </p>
+              <div className="mb-3">
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t('Upload password')}
+                </label>
+                <input
+                  className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  type="password"
+                  value={deleteDialog.password}
+                  onChange={e => setDeleteDialog(d => ({ ...d, password: e.target.value, error: '' }))}
+                  placeholder={t('Enter upload password')}
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') executeDelete()
+                  }}
+                />
+                {deleteDialog.error && (
+                  <p className="mt-1 text-sm text-red-500">{deleteDialog.error}</p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="rounded px-3 py-1.5 text-sm hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                  onClick={() => setDeleteDialog(d => ({ ...d, open: false, error: '', password: '' }))}
+                >
+                  {t('Cancel')}
+                </button>
+                <button
+                  className="rounded bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={deleteDialog.loading || !deleteDialog.password}
+                  onClick={executeDelete}
+                >
+                  {deleteDialog.loading ? t('Deleting...') : t('Delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!onlyOnePage && (
           <div className="rounded-b bg-white dark:bg-gray-900 dark:text-gray-100">

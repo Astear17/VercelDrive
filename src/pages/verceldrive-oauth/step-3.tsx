@@ -38,9 +38,6 @@ export async function getServerSideProps({ query, locale }) {
         error: 'No auth code present',
         description: 'Where is the auth code? Did you follow step 2 you silly donut?',
         ...(await serverSideTranslations(locale, ['common'])),
-        clientId,
-        clientSecret,
-        userPrincipalName,
       },
     }
   }
@@ -63,8 +60,6 @@ export async function getServerSideProps({ query, locale }) {
 
   return {
     props: {
-      clientId,
-      clientSecret,
       userPrincipalName,
       error: null,
       expiryTime,

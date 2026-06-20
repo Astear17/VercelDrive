@@ -7,6 +7,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 import { checkAuthRoute, encodePath, getAccessToken } from '.'
 import apiConfig from '../../../config/api.config'
+import { verifySignedPath } from '../../utils/signedUrl'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const accessToken = await getAccessToken()
@@ -15,46 +16,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
-  // Get item thumbnails by its path since we will later check if it is protected
-  const { path = '', size = 'medium', odpt = '' } = req.query
+  const { path = '', size = 'medium', odpt = '', token: signedToken } = req.query
 
-  // Set edge function caching for faster load times, if route is not protected, check docs:
-  // https://vercel.com/docs/concepts/functions/edge-caching
-  if (odpt === '') res.setHeader('Cache-Control', apiConfig.cacheControlHeader)
-
-  // Check whether the size is valid - must be one of 'large', 'medium', or 'small'
   if (size !== 'large' && size !== 'medium' && size !== 'small') {
-    res.status(400).json({ error: 'Invalid size' })
+    res.status(400).json({ error: 'Invalid size.' })
     return
   }
-  // Sometimes the path parameter is defaulted to '[...path]' which we need to handle
   if (path === '[...path]') {
     res.status(400).json({ error: 'No path specified.' })
     return
   }
-  // If the path is not a valid path, return 400
   if (typeof path !== 'string') {
     res.status(400).json({ error: 'Path query invalid.' })
     return
   }
   const cleanPath = pathPosix.resolve('/', pathPosix.normalize(path))
 
-  const { code, message } = await checkAuthRoute(cleanPath, accessToken, odpt as string)
-  // Status code other than 200 means user has not authenticated yet
-  if (code !== 200) {
-    res.status(code).json({ error: message })
-    return
-  }
-  // If message is empty, then the path is not protected.
-  // Conversely, protected routes are not allowed to serve from cache.
-  if (message !== '') {
-    res.setHeader('Cache-Control', 'no-cache')
+  // Check signed URL first
+  const signedParam = Array.isArray(signedToken) ? signedToken[0] : signedToken
+  const isSignedUrl = signedParam ? verifySignedPath(cleanPath, signedParam) : false
+
+  if (!isSignedUrl) {
+    // Legacy odpt or header-based auth
+    const rawHeader = req.headers['od-protected-token']
+    const odTokenHeader = typeof rawHeader === 'string' && rawHeader
+      ? rawHeader
+      : Array.isArray(odpt) ? odpt[0] : odpt
+
+    const { code, message } = await checkAuthRoute(cleanPath, accessToken, odTokenHeader)
+    if (code !== 200) {
+      res.status(code).json({ error: message })
+      return
+    }
+
+    // Protected routes must not be served from cache
+    if (message !== '') {
+      res.setHeader('Cache-Control', 'no-store')
+    } else {
+      res.setHeader('Cache-Control', apiConfig.cacheControlHeader)
+    }
+  } else {
+    // Valid signed URL — no-store for security
+    res.setHeader('Cache-Control', 'no-store')
   }
 
   const requestPath = encodePath(cleanPath)
-  // Handle response from OneDrive API
   const requestUrl = `${apiConfig.driveApi}/root${requestPath}`
-  // Whether path is root, which requires some special treatment
   const isRoot = requestPath === ''
 
   try {
@@ -66,10 +73,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (thumbnailUrl) {
       res.redirect(thumbnailUrl)
     } else {
-      res.status(400).json({ error: "The item doesn't have a valid thumbnail." })
+      res.status(404).json({ error: 'No thumbnail available for this item.' })
     }
   } catch (error: any) {
-    res.status(error?.response?.status).json({ error: error?.response?.data ?? 'Internal server error.' })
+    res.status(error?.response?.status ?? 500).json({ error: error?.response?.data ?? 'Internal server error.' })
   }
   return
 }

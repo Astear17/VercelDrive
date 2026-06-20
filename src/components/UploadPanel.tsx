@@ -189,9 +189,10 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
       if (axios.isCancel(error) || error?.code === 'ERR_CANCELED') {
         updateItem(item.id, { status: 'cancelled', error: 'Upload cancelled.' })
       } else {
+        const errMsg = error?.response?.data?.error || error?.message || 'Upload failed.'
         updateItem(item.id, {
           status: 'failed',
-          error: error?.response?.data?.error || error?.message || 'Upload failed.',
+          error: errMsg,
         })
       }
     } finally {
@@ -204,8 +205,11 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
     const pending = items.filter(
       item => item.status === 'queued' || item.status === 'failed' || item.status === 'cancelled'
     )
-    for (const item of pending) {
-      await uploadOne(item)
+    // Process up to 3 files concurrently for better throughput
+    const concurrency = 3
+    for (let i = 0; i < pending.length; i += concurrency) {
+      const batch = pending.slice(i, i + concurrency)
+      await Promise.all(batch.map(item => uploadOne(item)))
     }
   }
 
@@ -396,9 +400,17 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-medium">{item.relativePath}</div>
-                          <div className="text-xs text-gray-500">
-                            {item.status}
-                            {item.error ? `: ${item.error}` : ''}
+                          <div className={`text-xs ${
+                            item.status === 'failed' ? 'text-red-500' :
+                            item.status === 'cancelled' ? 'text-yellow-600' :
+                            item.status === 'success' ? 'text-green-600' :
+                            'text-gray-500'
+                          }`}>
+                            {item.status === 'uploading' ? `Uploading... ${item.progress}%` :
+                             item.status === 'success' ? 'Complete' :
+                             item.status === 'failed' ? `Failed: ${item.error || 'Unknown error'}` :
+                             item.status === 'cancelled' ? 'Cancelled' :
+                             item.status}
                           </div>
                         </div>
                         <div className="flex flex-shrink-0 items-center gap-2">

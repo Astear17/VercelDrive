@@ -1,6 +1,7 @@
 {
-  "name": "",
-  "short_name": "",
+  "name": "VercelDrive",
+  "short_name": "VercelDrive",
+  "description": "A self-hosted OneDrive file browser",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
