@@ -7,6 +7,7 @@ import Cors from 'cors'
 import { driveApi, cacheControlHeader } from '../../../config/api.config'
 import { encodePath, getAccessToken, checkAuthRoute } from '.'
 import { verifySignedPath } from '../../utils/signedUrl'
+import { isPersonalVaultPath } from '../../utils/personalVault'
 
 // CORS middleware for raw links
 export function runCorsMiddleware(req: NextApiRequest, res: NextApiResponse) {
@@ -73,6 +74,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const cleanPath = pathPosix.resolve('/', pathPosix.normalize(path))
+
+  // Block direct access to Personal Vault
+  if (isPersonalVaultPath(cleanPath)) {
+    res.status(404).json({ error: 'Personal Vault is not available in VercelDrive.' })
+    return
+  }
+
   const { token, via } = resolveAuthToken(req, cleanPath)
 
   // If signed URL is valid, skip .password check entirely

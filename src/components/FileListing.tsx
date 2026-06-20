@@ -15,6 +15,7 @@ import { getPreviewType, preview } from '../utils/getPreviewType'
 import { useProtectedSWRInfinite } from '../utils/fetchWithSWR'
 import { getExtension, getRawExtension, getFileIcon } from '../utils/getFileIcon'
 import { getStoredToken } from '../utils/protectedRouteHandler'
+import { isPersonalVault } from '../utils/personalVault'
 import {
   DownloadingToast,
   downloadMultipleFiles,
@@ -230,8 +231,9 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
   const responses: any[] = data ? [].concat(...data) : []
 
   if ('folder' in responses[0]) {
-    // Expand list of API returns into flattened file data
-    const allFolderChildren = [].concat(...responses.map(r => r.folder.value)) as OdFolderObject['value']
+    // Expand list of API returns into flattened file data, defensive filter for Personal Vault
+    const allFolderChildren = [].concat(...responses.map(r => r.folder.value))
+      .filter(c => !isPersonalVault(c)) as OdFolderObject['value']
     const folderChildren = allFolderChildren.filter(c => {
       if (itemTypeFilter === 'folders') return Boolean(c.folder)
       if (itemTypeFilter === 'files') return !c.folder

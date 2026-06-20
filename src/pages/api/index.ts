@@ -9,6 +9,7 @@ import { revealObfuscatedToken } from '../../utils/oAuthHandler'
 import { compareHashedToken } from '../../utils/protectedRouteHandler'
 import { getOdAuthTokens, storeOdAuthTokens } from '../../utils/odAuthTokenStore'
 import { runCorsMiddleware } from './raw'
+import { isPersonalVaultPath, filterPersonalVault } from '../../utils/personalVault'
 
 const basePath = pathPosix.resolve('/', process.env.BASE_DIRECTORY || '/')
 const clientId = process.env.CLIENT_ID || ''
@@ -211,6 +212,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Besides normalizing and making absolute, trailing slashes are trimmed
   const cleanPath = pathPosix.resolve('/', pathPosix.normalize(path)).replace(/\/$/, '')
 
+  // Block direct access to Personal Vault
+  if (isPersonalVaultPath(cleanPath)) {
+    res.status(404).json({ error: 'Personal Vault is not available in VercelDrive.' })
+    return
+  }
+
   // Validate sort param
   if (typeof sort !== 'string') {
     res.status(400).json({ error: 'Sort query invalid.' })
@@ -286,13 +293,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         headers: { Authorization: `Bearer ${accessToken}` },
         params: {
           ...{
-            select: 'name,size,id,lastModifiedDateTime,folder,file,video,image',
+            select: 'name,size,id,lastModifiedDateTime,folder,file,video,image,specialFolder',
             $top: siteConfig.maxItems,
           },
           ...(next ? { $skipToken: next } : {}),
           ...(sort ? { $orderby: sort } : {}),
         },
       })
+
+      // Filter out Personal Vault from listings
+      folderData.value = filterPersonalVault(folderData.value)
 
       // Extract next page token from full @odata.nextLink
       const nextPage = folderData['@odata.nextLink']

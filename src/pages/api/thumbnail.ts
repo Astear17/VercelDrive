@@ -8,6 +8,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { checkAuthRoute, encodePath, getAccessToken } from '.'
 import apiConfig from '../../../config/api.config'
 import { verifySignedPath } from '../../utils/signedUrl'
+import { isPersonalVaultPath } from '../../utils/personalVault'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const accessToken = await getAccessToken()
@@ -31,6 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
   const cleanPath = pathPosix.resolve('/', pathPosix.normalize(path))
+
+  // Block direct access to Personal Vault
+  if (isPersonalVaultPath(cleanPath)) {
+    res.status(404).json({ error: 'Personal Vault is not available in VercelDrive.' })
+    return
+  }
 
   // Check signed URL first
   const signedParam = Array.isArray(signedToken) ? signedToken[0] : signedToken

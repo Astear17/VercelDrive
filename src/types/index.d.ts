@@ -16,6 +16,7 @@ export type OdFolderObject = {
     folder?: { childCount: number; view: { sortBy: string; sortOrder: 'ascending'; viewType: 'thumbnails' } }
     image?: OdImageFile
     video?: OdVideoFile
+    specialFolder?: { name: string }
   }>
 }
 export type OdFolderChildren = OdFolderObject['value'][number]

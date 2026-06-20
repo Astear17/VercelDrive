@@ -4,6 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { encodePath, getAccessToken } from '.'
 import apiConfig from '../../../config/api.config'
 import siteConfig from '../../../config/site.config'
+import { filterPersonalVault } from '../../utils/personalVault'
 
 /**
  * Sanitize the search query
@@ -46,11 +47,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { data } = await axios.get(searchApi, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: {
-          select: 'id,name,file,folder,parentReference',
+          select: 'id,name,file,folder,parentReference,specialFolder',
           top: siteConfig.maxItems,
         },
       })
-      res.status(200).json(data.value)
+      res.status(200).json(filterPersonalVault(data.value))
     } catch (error: any) {
       res.status(error?.response?.status ?? 500).json({ error: error?.response?.data ?? 'Internal server error.' })
     }
