@@ -1,176 +1,172 @@
 # VercelDrive
 
-English | [Tieng Viet](README.vi-VN.md)
+[English](README.md) | [Tieng Viet](README.vi-VN.md)
 
-VercelDrive is a Next.js and TypeScript OneDrive directory listing app for Vercel. It lets you browse, preview, share, download, and optionally upload files from a configured OneDrive directory.
+A self-hosted OneDrive file browser built with Next.js and TypeScript, designed for one-click deployment on Vercel. Browse, preview, share, download, and optionally upload files from your OneDrive — no server required.
 
-This repository is maintained by [Astear17](https://github.com/Astear17) and builds on the archived VercelDrive codebase with changes for one-click Vercel deployment, server-side environment variables, Redis token storage, and upload support.
-
-## Features
-
-- Public OneDrive folder browsing
-- File preview, sharing, and direct download links
-- Optional protected routes with `.password` files
-- Optional file and folder uploads to the current folder
-- Drag-and-drop upload where supported by the browser
-- Large-file uploads through Microsoft Graph upload sessions
-- Raw iPhone Live Photo component uploads, including HEIC/HEIF and MOV files
-- Server-side upload password gate with short-lived upload authorization
-
-## Demo
-
-- Production: [2drv.vercel.app](https://2drv.vercel.app)
+**Demo**: [2drv.vercel.app](https://2drv.vercel.app)
 
 ![demo](./public/demo.png)
 
-## Setup Mode
+## Features
 
-Choose the permission model before creating your Microsoft Entra App Registration and deploying to Vercel.
+- Browse and search files in your OneDrive directory
+- Preview images, videos, audio, PDFs, Office documents, Markdown, code, and EPUBs
+- Generate direct download and permalink links
+- Password-protect specific folders with `.password` files
+- Upload files and folders directly from the browser (optional)
+- Large file uploads via Microsoft Graph upload sessions
+- Drag-and-drop upload support
+- iPhone Live Photo uploads (HEIC/HEIF + MOV)
+- Multi-language UI (English, German, Spanish, Hindi, Indonesian, Turkish, Vietnamese)
+- Dark mode support
 
-| Mode | Best for | Microsoft Graph delegated permissions | Upload variables |
-| --- | --- | --- | --- |
-| Read-only | Public browsing, previews, sharing, and downloads only | `User.Read`, `Files.Read.All`, `offline_access` | Do not set `UPLOAD_PASSWORD` |
-| Read/write | Browsing plus browser uploads and folder creation | `User.Read`, `Files.ReadWrite.All`, `offline_access` | Set `UPLOAD_PASSWORD`; optionally set `UPLOAD_CONFLICT_BEHAVIOR` |
+## Quick Start
 
-If you start with read-only and later enable uploads, update the app permission to `Files.ReadWrite.All`, clear the old Redis/KV OAuth tokens, redeploy, and authenticate again. Existing tokens keep their old scope until they are replaced.
+### 1. Create a Microsoft Entra App Registration
 
-## Deploy To Vercel
+1. Go to [Azure Portal > App registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+2. Register a new application
+3. Set the redirect URI to `http://localhost`
+4. Add delegated permissions: `User.Read`, `Files.Read.All`, `offline_access`
+5. Create a client secret
+6. Note the **Application (client) ID** and **client secret value**
 
-Prepare these values before deploying:
+> For upload support, use `Files.ReadWrite.All` instead of `Files.Read.All`.
 
-- `NEXT_PUBLIC_SITE_TITLE`
-- `USER_PRINCIPAL_NAME`
-- `BASE_DIRECTORY`
-- `CLIENT_ID`
-- `CLIENT_SECRET`
-- `REDIS_URL` after connecting Redis
-- `UPLOAD_PASSWORD` only when using read/write mode
+### 2. Deploy to Vercel
 
-### Read-only deployment
+Click one of the buttons below. You will be prompted for environment variables during setup.
 
-Use this when you only want visitors to browse, preview, share, and download files.
+#### Read-only
 
-[![Deploy read-only with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+Browse, preview, share, and download files. No upload capability.
 
-### Read/write deployment with uploads
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
 
-Use this when you want authorized users to upload files or folders from the browser.
+**Required variables**: `NEXT_PUBLIC_SITE_TITLE`, `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `CLIENT_ID`, `CLIENT_SECRET`
 
-[![Deploy with uploads on Vercel](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+#### Read-only with protected routes
 
-### Optional deployment variants
+Same as above, but certain folders require a password to access.
 
-- Add `NEXT_PUBLIC_PROTECTED_ROUTES` if some folders require password access.
-- Add `KV_PREFIX` if multiple deployments share the same Redis database.
-- Add `NEXT_PUBLIC_EMAIL` if you want a contact link in the header.
-- Add `UPLOAD_CONFLICT_BEHAVIOR` in read/write mode to control duplicate upload names. Supported values are `rename`, `replace`, and `fail`.
+[![Deploy with protected routes](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,NEXT_PUBLIC_PROTECTED_ROUTES&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
 
-After the first deploy, connect Redis. Upstash Redis is a common choice on Vercel because the integration can inject `REDIS_URL` automatically. Redeploy after `REDIS_URL` is available, then open the site and complete the OAuth flow.
+**Required variables**: all of the above + `NEXT_PUBLIC_PROTECTED_ROUTES`
+
+#### Read/write with uploads
+
+Authorized users can upload files and folders from the browser.
+
+[![Deploy with uploads](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+
+**Required variables**: all read-only variables + `UPLOAD_PASSWORD`
+
+#### Full deployment (uploads + protected routes + contact email)
+
+All features enabled.
+
+[![Deploy full](https://vercel.com/button)](https://vercel.com/new/git/clone?repository-url=https%3A%2F%2Fgithub.com%2FAstear17%2FVercelDrive&env=NEXT_PUBLIC_SITE_TITLE,USER_PRINCIPAL_NAME,BASE_DIRECTORY,CLIENT_ID,CLIENT_SECRET,UPLOAD_PASSWORD,NEXT_PUBLIC_PROTECTED_ROUTES,NEXT_PUBLIC_EMAIL&buildCommand=pnpm+build&framework=nextjs&installCommand=pnpm+install)
+
+**Required variables**: all read-only variables + `UPLOAD_PASSWORD`, `NEXT_PUBLIC_PROTECTED_ROUTES`, `NEXT_PUBLIC_EMAIL`
+
+### 3. Connect Redis
+
+After the first deploy:
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Storage** and connect an Upstash Redis database (or any Redis provider)
+3. The `REDIS_URL` variable will be injected automatically
+4. **Redeploy** your project
+
+### 4. Authenticate
+
+1. Open your deployed site
+2. You will see the OAuth setup wizard
+3. Follow the 3-step process to authorize your Microsoft account
+4. The site will store tokens in Redis and begin working
 
 ## Environment Variables
 
 ### Required
 
-| Name | Description | Example |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SITE_TITLE` | Site title shown in the UI. This value is public in the browser bundle. | `2Drive` |
-| `USER_PRINCIPAL_NAME` | OneDrive account to access. | `example@outlook.com` |
-| `BASE_DIRECTORY` | Root OneDrive directory exposed by the site. | `/` or `/Public Drive` |
-| `CLIENT_ID` | Microsoft Entra App Registration client ID. | Azure application ID |
-| `CLIENT_SECRET` | AES-obfuscated Azure client secret used by this project. | See documentation |
-| `REDIS_URL` | Redis connection string for OAuth token storage. | Upstash Redis URL |
+| Variable | Description | Example |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_TITLE` | Site title shown in the browser tab and UI | `My Drive` |
+| `USER_PRINCIPAL_NAME` | Microsoft account email | `user@outlook.com` |
+| `BASE_DIRECTORY` | OneDrive folder to expose | `/` or `/Public` |
+| `CLIENT_ID` | Azure App Registration client ID | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
+| `CLIENT_SECRET` | Azure client secret (AES-encrypted by the app) | See [encryption note](#client-secret-encryption) |
+| `REDIS_URL` | Redis connection string | `redis://default:xxx@host:port` |
 
-### Required only for read/write uploads
+### Upload mode
 
-| Name | Description | Example |
-| --- | --- | --- |
-| `UPLOAD_PASSWORD` | Server-only password required before any upload action starts. | A strong private value |
+| Variable | Description | Default |
+|---|---|---|
+| `UPLOAD_PASSWORD` | Server-side password gate for all upload actions | *(none — uploads disabled without it)* |
+| `UPLOAD_CONFLICT_BEHAVIOR` | What to do when a file with the same name exists | `rename` |
+
+Supported values: `rename`, `replace`, `fail`
 
 ### Optional
 
-| Name | Description | Example |
-| --- | --- | --- |
-| `NEXT_PUBLIC_PROTECTED_ROUTES` | Comma-separated protected folder paths. | `/private,/family` |
-| `NEXT_PUBLIC_EMAIL` | Contact email shown in the header. | `admin@example.com` |
-| `KV_PREFIX` | Redis key prefix for shared Redis databases. | `drive1_` |
-| `UPLOAD_CONFLICT_BEHAVIOR` | OneDrive conflict behavior for uploaded files. | `rename`, `replace`, or `fail` |
+| Variable | Description | Default |
+|---|---|---|
+| `NEXT_PUBLIC_PROTECTED_ROUTES` | Comma-separated folder paths requiring password | *(none)* |
+| `NEXT_PUBLIC_EMAIL` | Contact email shown in the header | *(none)* |
+| `KV_PREFIX` | Redis key prefix for shared databases | *(none)* |
 
-Do not prefix `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `CLIENT_ID`, `CLIENT_SECRET`, `REDIS_URL`, `UPLOAD_PASSWORD`, Redis values, or Microsoft tokens with `NEXT_PUBLIC_`. Values with that prefix are included in the browser bundle.
+> **Security**: Do not prefix secrets (`CLIENT_SECRET`, `UPLOAD_PASSWORD`, `REDIS_URL`) with `NEXT_PUBLIC_`. Variables with that prefix are exposed in the browser.
+
+## Client Secret Encryption
+
+The `CLIENT_SECRET` environment variable must be AES-encrypted using the app's built-in obfuscation key. The OAuth setup wizard handles this automatically — paste your raw client secret when prompted, and the app will encrypt and store it.
 
 ## Uploads
 
-Uploads require read/write mode, `Files.ReadWrite.All`, and `UPLOAD_PASSWORD`.
+When `UPLOAD_PASSWORD` is set and the Azure app has `Files.ReadWrite.All` permission:
 
-The upload button appears in folder views. After entering the upload password, users can:
+- An upload button appears in folder views
+- Users enter the upload password once per session
+- Supports single file, multi-file, and folder uploads
+- Drag and drop where browser APIs allow
+- Per-file progress, retry, and cancellation
+- Large files use chunked Microsoft Graph upload sessions
+- Folder uploads preserve directory structure
 
-- Select one or more files
-- Select a whole folder with browsers that support `webkitdirectory`
-- Drag and drop files or folders where directory drop APIs are available
-- See per-file progress, total progress, success/failure state, retry actions, and active upload cancellation
+## Migrating from Read-only to Read/Write
 
-Files are uploaded to the OneDrive folder currently open in the browser. Folder uploads preserve the relative folder tree. The app accepts every file type and does not filter by extension.
-
-Large files use Microsoft Graph upload sessions. The server creates the session using the stored Microsoft access token, then the browser uploads chunks directly to the short-lived Graph upload URL. This keeps Microsoft access tokens server-side and avoids buffering full files in Vercel functions.
-
-## iPhone Live Photos
-
-iPhone Live Photos are usually exported as paired media files, commonly a HEIC or HEIF image plus a MOV video. VercelDrive does not convert, compress, rename, or strip metadata from selected files.
-
-To preserve a Live Photo, upload both original components together. The safest option is to select the exported folder from iCloud, Photos, or the iPhone file export so the HEIC/HEIF and MOV files are uploaded with their original names and relative paths.
-
-## Existing Deployment Migration
-
-Existing read-only deployments will not automatically receive write permission. Choose one migration path.
-
-### Option A: Update The Current Azure App
-
-1. Open Azure Portal.
-2. Open the existing App Registration.
-3. Add delegated Microsoft Graph permission `Files.ReadWrite.All`.
-4. Keep `User.Read` and `offline_access`.
-5. Grant admin consent if your tenant requires it.
-6. Regenerate the client secret if needed.
-7. Update Vercel environment variables if the secret changed.
-8. Add `UPLOAD_PASSWORD` and optionally `UPLOAD_CONFLICT_BEHAVIOR`.
-9. Clear the old Redis/KV OAuth keys: `<KV_PREFIX>access_token` and `<KV_PREFIX>refresh_token`.
-10. Redeploy and authenticate again.
-
-An upload-authorized admin can also call `POST /api/upload/reset-auth-tokens` to clear stored OAuth tokens.
-
-### Option B: Create A New Azure App
-
-1. Create a new Azure App Registration.
-2. Add the redirect URI used by the VercelDrive OAuth flow.
-3. Add delegated permissions: `User.Read`, `Files.ReadWrite.All`, `offline_access`.
-4. Create a new client secret.
-5. Update Vercel variables: `CLIENT_ID`, `CLIENT_SECRET`, `USER_PRINCIPAL_NAME`, `BASE_DIRECTORY`, `REDIS_URL` if needed, and `UPLOAD_PASSWORD`.
-6. Redeploy and authenticate again.
+1. Update the Azure App permission from `Files.Read.All` to `Files.ReadWrite.All`
+2. Grant admin consent if required by your tenant
+3. Add `UPLOAD_PASSWORD` to Vercel environment variables
+4. Clear stored OAuth tokens: call `POST /api/upload/reset-auth-tokens` or delete Redis keys `<KV_PREFIX>access_token` and `<KV_PREFIX>refresh_token`
+5. Redeploy and re-authenticate
 
 ## Troubleshooting
 
-- Upload says permission denied: confirm `Files.ReadWrite.All` is configured, consent is granted if needed, old Redis tokens were cleared, and OAuth was completed again.
-- The site still behaves as read-only: delete the Redis/KV `access_token` and `refresh_token` keys, including `KV_PREFIX` when configured.
-- Folder upload is unavailable: use a Chromium-based browser for folder picker support. Other browsers may support only file selection.
-- A Live Photo uploaded as only an image: select both the HEIC/HEIF image and MOV video, or upload the full export folder.
-- Large upload failed: retry from a stable connection. Upload sessions can expire, and Microsoft Graph can throttle long-running uploads.
-- Local build shows Redis connection warnings: configure `REDIS_URL` locally or ignore the warnings when only validating the static build.
+| Problem | Solution |
+|---|---|
+| Upload says permission denied | Confirm `Files.ReadWrite.All` is granted, clear Redis tokens, re-authenticate |
+| Site still behaves as read-only | Delete Redis keys `access_token` and `refresh_token` (include `KV_PREFIX` if set) |
+| Folder upload unavailable | Use a Chromium-based browser for `webkitdirectory` support |
+| Large upload failed | Retry on a stable connection; upload sessions can expire |
+| Local build shows Redis warnings | Set `REDIS_URL` locally or ignore when only validating the build |
 
-## Security Notes
+## Security
 
-Enabling upload makes the site write-capable. Use a strong `UPLOAD_PASSWORD`, restrict deployment access where possible, and do not expose secrets through `NEXT_PUBLIC_` environment variables.
-
-Upload authorization is checked server-side on every upload API request. The browser UI is not the security boundary.
+- Upload authorization is enforced server-side on every API request
+- Use a strong `UPLOAD_PASSWORD` and restrict deployment access
+- Never expose secrets via `NEXT_PUBLIC_` prefixed variables
+- Tokens stored in Redis are AES-encrypted
 
 ## Development
-
-Install dependencies and build with the package manager used by the lockfile:
 
 ```bash
 pnpm install
 pnpm build
 ```
 
-If your global pnpm is too new for the lockfile, use pnpm 8:
+If your global pnpm version is too new for the lockfile:
 
 ```bash
 npx pnpm@8 install --frozen-lockfile
@@ -179,14 +175,10 @@ npx pnpm@8 build
 
 ## Documentation
 
-Project documentation is available at [2drv-docs.vercel.app](https://2drv-docs.vercel.app).
+Full documentation: [2drv-docs.vercel.app](https://2drv-docs.vercel.app)
 
 ## License
 
-[MIT License](LICENSE)
+[MIT](LICENSE)
 
-© 2021-2023 [spencer woo](https://spencerwoo.com)
-
-© 2023 [iRedScarf](https://github.com/iRedScarf)
-
-© 2026 [Astear17](https://github.com/Astear17)
+© 2021-2023 [spencer woo](https://spencerwoo.com) · © 2023 [iRedScarf](https://github.com/iRedScarf) · © 2026 [Astear17](https://github.com/Astear17)
