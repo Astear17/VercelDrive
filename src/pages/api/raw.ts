@@ -1,13 +1,14 @@
 import { posix as pathPosix } from 'path'
 
 import type { NextApiRequest, NextApiResponse } from 'next'
-import axios, { AxiosResponseHeaders } from 'axios'
+import axios from 'axios'
 import Cors from 'cors'
 
-import { driveApi, cacheControlHeader } from '../../../config/api.config'
+import { driveApi } from '../../../config/api.config'
 import { encodePath, getAccessToken, checkAuthRoute } from '.'
 import { verifySignedPath } from '../../utils/signedUrl'
 import { isPersonalVaultPath } from '../../utils/personalVault'
+import { buildContentDisposition } from '../../utils/contentDisposition'
 
 // CORS middleware for raw links
 export function runCorsMiddleware(req: NextApiRequest, res: NextApiResponse) {
@@ -54,6 +55,14 @@ function resolveAuthToken(
   return { token: '', via: 'header' }
 }
 
+/**
+ * Derive a display filename from the request path.
+ */
+function filenameFromPath(cleanPath: string): string {
+  const base = pathPosix.basename(cleanPath)
+  return base || 'download'
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const accessToken = await getAccessToken()
   if (!accessToken) {
@@ -61,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
-  const { path = '/', proxy = false } = req.query
+  const { path = '/' } = req.query
 
   if (path === '[...path]') {
     res.status(400).json({ error: 'No path specified.' })
@@ -103,27 +112,68 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data } = await axios.get(requestUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: {
-        select: 'id,size,@microsoft.graph.downloadUrl',
+        select: 'id,name,size,@microsoft.graph.downloadUrl',
       },
     })
 
-    if ('@microsoft.graph.downloadUrl' in data) {
-      if (proxy && 'size' in data && data['size'] < 4194304) {
-        const { headers, data: stream } = await axios.get(
-          data['@microsoft.graph.downloadUrl'] as string,
-          { responseType: 'stream' }
-        )
-
-        headers['Cache-Control'] = 'no-store'
-        res.writeHead(200, headers as AxiosResponseHeaders)
-        stream.pipe(res)
-      } else {
-        res.redirect(data['@microsoft.graph.downloadUrl'])
-      }
-    } else {
+    if (!('@microsoft.graph.downloadUrl' in data)) {
       res.status(404).json({ error: 'No download url found.' })
+      return
     }
 
+    const downloadUrl = data['@microsoft.graph.downloadUrl'] as string
+    const fileName = (data['name'] as string) || filenameFromPath(cleanPath)
+    const fileSize = typeof data['size'] === 'number' ? data['size'] : undefined
+
+    // Build upstream request headers — forward Range for streaming
+    const upstreamHeaders: Record<string, string> = {}
+    const rangeHeader = req.headers.range
+    if (rangeHeader) {
+      upstreamHeaders['Range'] = rangeHeader
+    }
+
+    const upstream = await axios.get(downloadUrl, {
+      headers: upstreamHeaders,
+      responseType: 'stream',
+      maxRedirects: 5,
+      validateStatus: s => (s >= 200 && s < 300) || s === 206,
+    })
+
+    const upstreamStatus = upstream.status
+    const upstreamHeadersResp = upstream.headers
+
+    // Set download filename headers
+    res.setHeader('Content-Disposition', buildContentDisposition(fileName))
+
+    // Copy relevant headers from upstream
+    const contentType = String(upstreamHeadersResp['content-type'] || 'application/octet-stream')
+    res.setHeader('Content-Type', contentType)
+
+    if (upstreamHeadersResp['accept-ranges']) {
+      res.setHeader('Accept-Ranges', String(upstreamHeadersResp['accept-ranges']))
+    }
+
+    if (upstreamStatus === 206) {
+      // Partial content — range request
+      res.status(206)
+      if (upstreamHeadersResp['content-range']) {
+        res.setHeader('Content-Range', String(upstreamHeadersResp['content-range']))
+      }
+      if (upstreamHeadersResp['content-length']) {
+        res.setHeader('Content-Length', String(upstreamHeadersResp['content-length']))
+      }
+    } else {
+      // Full content
+      if (upstreamHeadersResp['content-length']) {
+        res.setHeader('Content-Length', String(upstreamHeadersResp['content-length']))
+      } else if (fileSize !== undefined) {
+        res.setHeader('Content-Length', String(fileSize))
+      }
+    }
+
+    res.setHeader('Cache-Control', 'no-store')
+
+    upstream.data.pipe(res)
     return
   } catch (error: any) {
     res

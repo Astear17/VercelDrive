@@ -10,6 +10,7 @@ import { compareHashedToken } from '../../utils/protectedRouteHandler'
 import { getOdAuthTokens, storeOdAuthTokens } from '../../utils/odAuthTokenStore'
 import { runCorsMiddleware } from './raw'
 import { isPersonalVaultPath, filterPersonalVault } from '../../utils/personalVault'
+import { buildContentDisposition } from '../../utils/contentDisposition'
 
 const basePath = pathPosix.resolve('/', process.env.BASE_DIRECTORY || '/')
 const clientId = process.env.CLIENT_ID || ''
@@ -257,8 +258,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Whether path is root, which requires some special treatment
   const isRoot = requestPath === ''
 
-  // Go for file raw download link, add CORS headers, and redirect to @microsoft.graph.downloadUrl
-  // (kept here for backwards compatibility, and cache headers will be reverted to no-store)
+  // Go for file raw download link, add CORS headers, and proxy-stream with correct filename
   if (raw) {
     await runCorsMiddleware(req, res)
     res.setHeader('Cache-Control', 'no-store')
@@ -266,16 +266,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data } = await axios.get(requestUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: {
-        // OneDrive international version fails when only selecting the downloadUrl (what a stupid bug)
-        select: 'id,@microsoft.graph.downloadUrl',
+        select: 'id,name,size,@microsoft.graph.downloadUrl',
       },
     })
 
-    if ('@microsoft.graph.downloadUrl' in data) {
-      res.redirect(data['@microsoft.graph.downloadUrl'])
-    } else {
+    if (!('@microsoft.graph.downloadUrl' in data)) {
       res.status(404).json({ error: 'No download url found.' })
+      return
     }
+
+    const downloadUrl = data['@microsoft.graph.downloadUrl'] as string
+    const fileName = (data['name'] as string) || pathPosix.basename(cleanPath) || 'download'
+
+    // Build upstream request headers — forward Range for streaming
+    const upstreamHeaders: Record<string, string> = {}
+    const rangeHeader = req.headers.range
+    if (rangeHeader) {
+      upstreamHeaders['Range'] = rangeHeader
+    }
+
+    const upstream = await axios.get(downloadUrl, {
+      headers: upstreamHeaders,
+      responseType: 'stream',
+      maxRedirects: 5,
+      validateStatus: s => (s >= 200 && s < 300) || s === 206,
+    })
+
+    const upstreamStatus = upstream.status
+    const uh = upstream.headers
+
+    // Set download filename headers
+    res.setHeader('Content-Disposition', buildContentDisposition(fileName))
+
+    // Copy relevant headers from upstream
+    if (uh['content-type']) res.setHeader('Content-Type', String(uh['content-type']))
+    if (uh['accept-ranges']) res.setHeader('Accept-Ranges', String(uh['accept-ranges']))
+
+    if (upstreamStatus === 206) {
+      res.status(206)
+      if (uh['content-range']) res.setHeader('Content-Range', String(uh['content-range']))
+      if (uh['content-length']) res.setHeader('Content-Length', String(uh['content-length']))
+    } else {
+      if (uh['content-length']) {
+        res.setHeader('Content-Length', String(uh['content-length']))
+      }
+    }
+
+    upstream.data.pipe(res)
     return
   }
 
