@@ -23,10 +23,10 @@ const FileListItem: FC<{ fileContent: OdFolderChildren }> = ({ fileContent: c })
         </div>
         <ChildName name={c.name} folder={Boolean(c.folder)} />
       </div>
-      <div className="col-span-3 hidden flex-shrink-0 text-sm text-gray-700 dark:text-gray-500 md:block">
+      <div className="col-span-3 hidden flex-shrink-0 font-mono text-sm text-gray-700 dark:text-gray-500 md:block">
         {formatModifiedDateTime(c.lastModifiedDateTime)}
       </div>
-      <div className="col-span-1 hidden flex-shrink-0 truncate text-sm text-gray-700 dark:text-gray-500 md:block">
+      <div className="col-span-1 hidden flex-shrink-0 truncate font-mono text-sm text-gray-700 dark:text-gray-500 md:block">
         {humanFileSize(c.size)}
       </div>
     </div>

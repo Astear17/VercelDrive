@@ -40,21 +40,22 @@ const VideoPlayer: FC<{
 }> = ({ videoName, videoUrl, width, height, thumbnail, subtitle, isFlv, mpegts }) => {
 
   const videoRef = useRef<APITypes | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     axios
       .get(subtitle, { responseType: 'blob' })
       .then(resp => {
-        const track = document.querySelector('track');
+        const track = containerRef.current?.querySelector('track');
         track?.setAttribute('src', URL.createObjectURL(resp.data));
       })
       .catch(() => {
-        console.log('Could not load subtitle.');
+        // Subtitle file not found or failed to load — silently ignore
       });
 
     if (isFlv && videoRef.current) {
       const flv = mpegts.createPlayer({ url: videoUrl, type: 'flv' });
 
-      const videoEl = document.querySelector('#plyr video') as HTMLVideoElement | null;
+      const videoEl = containerRef.current?.querySelector('video') as HTMLVideoElement | null;
       if (videoEl) {
         flv.attachMediaElement(videoEl);
         flv.load();
@@ -76,12 +77,14 @@ const VideoPlayer: FC<{
   };
 
   return (
-    <Plyr
-      ref={videoRef}
-      id="plyr"
-      source={plyrSource as any}
-      options={plyrOptions as any}
-    />
+    <div ref={containerRef}>
+      <Plyr
+        ref={videoRef}
+        id="plyr"
+        source={plyrSource as any}
+        options={plyrOptions as any}
+      />
+    </div>
   );
 };
 

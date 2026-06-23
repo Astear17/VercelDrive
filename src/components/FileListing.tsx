@@ -6,6 +6,8 @@ import toast, { Toaster } from 'react-hot-toast'
 import emojiRegex from 'emoji-regex'
 import axios from 'axios'
 
+const emojiRegexInstance = emojiRegex()
+
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useTranslation } from 'next-i18next'
@@ -48,6 +50,7 @@ import FolderGridLayout from './FolderGridLayout'
 import UploadPanel from './UploadPanel'
 import type { SortConfig, TypeFilter, TypeFilterOption } from './FolderControls'
 import { sortFolderChildren } from '../utils/sortItems'
+import ErrorBoundary from './ErrorBoundary'
 
 // Disabling SSR for some previews
 const EPUBPreview = dynamic(() => import('./previews/EPUBPreview'), {
@@ -72,7 +75,8 @@ const queryToPath = (query?: ParsedUrlQuery) => {
 
 // Render the icon of a folder child (may be a file or a folder), use emoji if the name of the child contains emoji
 const renderEmoji = (name: string) => {
-  const emoji = emojiRegex().exec(name)
+  emojiRegexInstance.lastIndex = 0
+  const emoji = emojiRegexInstance.exec(name)
   return { render: emoji && !emoji.index, emoji }
 }
 const formatChildName = (name: string) => {
@@ -637,40 +641,46 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
     const previewType = getPreviewType(getExtension(file.name), { video: Boolean(file.video) })
 
     if (previewType) {
-      switch (previewType) {
-        case preview.image:
-          return <ImagePreview file={file} />
+      return (
+        <ErrorBoundary>
+          {(() => {
+            switch (previewType) {
+              case preview.image:
+                return <ImagePreview file={file} />
 
-        case preview.text:
-          return <TextPreview file={file} />
+              case preview.text:
+                return <TextPreview file={file} />
 
-        case preview.code:
-          return <CodePreview file={file} />
+              case preview.code:
+                return <CodePreview file={file} />
 
-        case preview.markdown:
-          return <MarkdownPreview file={file} path={path} />
+              case preview.markdown:
+                return <MarkdownPreview file={file} path={path} />
 
-        case preview.video:
-          return <VideoPreview file={file} />
+              case preview.video:
+                return <VideoPreview file={file} />
 
-        case preview.audio:
-          return <AudioPreview file={file} />
+              case preview.audio:
+                return <AudioPreview file={file} />
 
-        case preview.pdf:
-          return <PDFPreview file={file} />
+              case preview.pdf:
+                return <PDFPreview file={file} />
 
-        case preview.office:
-          return <OfficePreview file={file} />
+              case preview.office:
+                return <OfficePreview file={file} />
 
-        case preview.epub:
-          return <EPUBPreview file={file} />
+              case preview.epub:
+                return <EPUBPreview file={file} />
 
-        case preview.url:
-          return <URLPreview file={file} />
+              case preview.url:
+                return <URLPreview file={file} />
 
-        default:
-          return <DefaultPreview file={file} />
-      }
+              default:
+                return <DefaultPreview file={file} />
+            }
+          })()}
+        </ErrorBoundary>
+      )
     } else {
       return <DefaultPreview file={file} />
     }

@@ -25,12 +25,12 @@ const DefaultPreview: FC<{ file: OdFileObject }> = ({ file }) => {
           <div className="flex flex-col space-y-2 py-4 md:flex-1">
             <div>
               <div className="py-2 text-xs font-medium uppercase opacity-80">{t('Last modified')}</div>
-              <div>{formatModifiedDateTime(file.lastModifiedDateTime)}</div>
+              <div className="font-mono">{formatModifiedDateTime(file.lastModifiedDateTime)}</div>
             </div>
 
             <div>
               <div className="py-2 text-xs font-medium uppercase opacity-80">{t('File size')}</div>
-              <div>{humanFileSize(file.size)}</div>
+              <div className="font-mono">{humanFileSize(file.size)}</div>
             </div>
 
             <div>

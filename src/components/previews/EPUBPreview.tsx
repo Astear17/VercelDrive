@@ -18,7 +18,12 @@ const EPUBPreview: FC<{ file: OdFileObject }> = ({ file }) => {
   const epubContainer = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setEpubContainerWidth(epubContainer.current ? epubContainer.current.offsetWidth : 400)
+    const updateWidth = () => {
+      setEpubContainerWidth(epubContainer.current ? epubContainer.current.offsetWidth : 400)
+    }
+    updateWidth()
+    window.addEventListener('resize', updateWidth)
+    return () => window.removeEventListener('resize', updateWidth)
   }, [])
 
   const [location, setLocation] = useState<string>()

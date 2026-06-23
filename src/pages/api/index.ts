@@ -51,13 +51,11 @@ export async function getAccessToken(): Promise<string> {
 
   // Return in storage access token if it is still valid
   if (typeof accessToken === 'string') {
-    console.log('Fetch access token from storage.')
     return accessToken
   }
 
   // Return empty string if no refresh token is stored, which requires the application to be re-authenticated
   if (typeof refreshToken !== 'string') {
-    console.log('No refresh token, return empty access token.')
     return ''
   }
 
@@ -88,7 +86,6 @@ export async function getAccessToken(): Promise<string> {
       accessTokenExpiry: parseInt(expires_in),
       refreshToken: refresh_token,
     })
-    console.log('Fetch new access token with stored refresh token.')
     return access_token
   }
 
@@ -178,6 +175,14 @@ export async function checkAuthRoute(
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // If method is POST, then the API is called by the client to store acquired tokens
   if (req.method === 'POST') {
+    // CSRF protection: only allow same-origin requests
+    const origin = req.headers.origin || req.headers.referer || ''
+    const host = req.headers.host || ''
+    if (host && !origin.includes(host)) {
+      res.status(403).json({ error: 'Forbidden: cross-origin request rejected.' })
+      return
+    }
+
     const { obfuscatedAccessToken, accessTokenExpiry, obfuscatedRefreshToken } = req.body
     const accessToken = revealObfuscatedToken(obfuscatedAccessToken)
     const refreshToken = revealObfuscatedToken(obfuscatedRefreshToken)

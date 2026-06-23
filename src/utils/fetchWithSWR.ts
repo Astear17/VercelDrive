@@ -43,12 +43,12 @@ export function useProtectedSWRInfinite(path: string = '', sort: string = '') {
     if (previousPageData && !previousPageData.folder) return null
 
     // First page with no prevPageData
-    if (pageIndex === 0) return [`/api/?path=${path}${sort ? `&sort=${sort}` : ''}`, hashedToken]
+    if (pageIndex === 0) return [`/api/?path=${path}${sort ? `&sort=${encodeURIComponent(sort)}` : ''}`, hashedToken]
 
     if (!previousPageData?.next) return null
 
     // Add nextPage token to API endpoint
-    return [`/api/?path=${path}&next=${previousPageData.next}${sort ? `&sort=${sort}` : ''}`, hashedToken]
+    return [`/api/?path=${path}&next=${previousPageData.next}${sort ? `&sort=${encodeURIComponent(sort)}` : ''}`, hashedToken]
   }
 
   // Disable auto-revalidate, these options are equivalent to useSWRImmutable

@@ -49,6 +49,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
+  // CSRF protection: only allow same-origin requests
+  const origin = req.headers.origin || req.headers.referer || ''
+  const host = req.headers.host || ''
+  if (host && !origin.includes(host)) {
+    res.status(403).json({ error: 'Forbidden: cross-origin request rejected.' })
+    return
+  }
+
   if (!requireUploadAuth(req, res)) {
     return
   }

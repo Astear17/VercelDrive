@@ -2,6 +2,7 @@ import axios from 'axios'
 import { FC, FormEvent, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'next-i18next'
 
 type UploadStatus = 'queued' | 'uploading' | 'success' | 'failed' | 'cancelled'
 
@@ -74,6 +75,7 @@ async function getDroppedFiles(dataTransfer: DataTransfer): Promise<Array<{ file
 }
 
 const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [uploadAuthed, setUploadAuthed] = useState(false)
@@ -244,18 +246,18 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
   return (
     <>
       <button
-        title="Upload files or folders"
+        title={t('Upload files or folders')}
         className="inline-flex cursor-pointer items-center gap-2 rounded bg-gray-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
         onClick={openUploadPanel}
       >
         <FontAwesomeIcon icon="cloud" />
-        <span>Upload</span>
+        <span>{t('Upload')}</span>
       </button>
 
       {authOpen && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
           <form className="w-full max-w-sm rounded bg-white p-4 shadow-lg dark:bg-gray-900" onSubmit={authenticate}>
-            <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Upload password</h2>
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Upload password')}</h2>
             <input
               className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               type="password"
@@ -270,10 +272,10 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                 className="rounded px-3 py-1.5 text-sm hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
                 onClick={() => setAuthOpen(false)}
               >
-                Cancel
+                {t('Cancel')}
               </button>
               <button className="rounded bg-gray-800 px-3 py-1.5 text-sm text-white hover:bg-gray-700" type="submit">
-                Unlock
+                {t('Unlock')}
               </button>
             </div>
           </form>
@@ -285,8 +287,8 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
           <div className="mx-auto my-8 w-full max-w-3xl rounded bg-white shadow-lg dark:bg-gray-900 dark:text-gray-100">
             <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
               <div>
-                <h2 className="text-lg font-semibold">Upload</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Destination: {decodeURIComponent(path)}</p>
+                <h2 className="text-lg font-semibold">{t('Upload')}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('Destination')}: {decodeURIComponent(path)}</p>
               </div>
               <button
                 className="rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -299,17 +301,16 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
             <div className="space-y-4 p-4">
               {hasGraphPermissionError && (
                 <div className="rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-100">
-                  <div className="font-medium">Upload permission needs to be refreshed.</div>
+                  <div className="font-medium">{t('Upload permission needs to be refreshed.')}</div>
                   <p className="mt-1">
-                    Add delegated Microsoft Graph permission <code>Files.ReadWrite.All</code> in Azure, grant consent if
-                    your tenant requires it, reset stored OAuth tokens, then authenticate VercelDrive again.
+                    {t('Add delegated Microsoft Graph permission Files.ReadWrite.All in Azure, grant consent if your tenant requires it, reset stored OAuth tokens, then authenticate VercelDrive again.')}
                   </p>
                   <button
                     className="mt-3 rounded bg-yellow-900 px-3 py-1.5 text-white hover:bg-yellow-800 disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={resettingTokens}
                     onClick={resetAuthTokens}
                   >
-                    {resettingTokens ? 'Resetting...' : 'Reset OAuth tokens'}
+                    {resettingTokens ? t('Resetting...') : t('Reset OAuth tokens')}
                   </button>
                 </div>
               )}
@@ -332,20 +333,20 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                 }}
               >
                 <div className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-                  Drop files or folders here. Folder drop support depends on the browser.
+                  {t('Drop files or folders here. Folder drop support depends on the browser.')}
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
                   <button
                     className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    Select files
+                    {t('Select files')}
                   </button>
                   <button
                     className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
                     onClick={() => folderInputRef.current?.click()}
                   >
-                    Select folder
+                    {t('Select folder')}
                   </button>
                 </div>
                 <input
@@ -383,7 +384,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
 
               <div>
                 <div className="mb-1 flex justify-between text-sm">
-                  <span>Total progress</span>
+                  <span>{t('Total progress')}</span>
                   <span>{totalProgress}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded bg-gray-200 dark:bg-gray-800">
@@ -393,7 +394,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
 
               <div className="max-h-80 overflow-y-auto rounded border border-gray-200 dark:border-gray-700">
                 {items.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-500">No files selected.</div>
+                  <div className="p-4 text-center text-sm text-gray-500">{t('No files selected.')}</div>
                 ) : (
                   items.map(item => (
                     <div key={item.id} className="border-b border-gray-100 p-3 last:border-b-0 dark:border-gray-800">
@@ -406,10 +407,10 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                             item.status === 'success' ? 'text-green-600' :
                             'text-gray-500'
                           }`}>
-                            {item.status === 'uploading' ? `Uploading... ${item.progress}%` :
-                             item.status === 'success' ? 'Complete' :
-                             item.status === 'failed' ? `Failed: ${item.error || 'Unknown error'}` :
-                             item.status === 'cancelled' ? 'Cancelled' :
+                            {item.status === 'uploading' ? t('Uploading... {{progress}}%', { progress: item.progress }) :
+                             item.status === 'success' ? t('Complete') :
+                             item.status === 'failed' ? t('Failed: {{error}}', { error: item.error || t('Unknown error') }) :
+                             item.status === 'cancelled' ? t('Cancelled') :
                              item.status}
                           </div>
                         </div>
@@ -419,7 +420,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                               className="rounded px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                               onClick={() => cancelUpload(item.id)}
                             >
-                              Cancel
+                              {t('Cancel')}
                             </button>
                           )}
                           {(item.status === 'failed' || item.status === 'cancelled') && (
@@ -427,7 +428,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                               className="rounded px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                               onClick={() => uploadOne(item)}
                             >
-                              Retry
+                              {t('Retry')}
                             </button>
                           )}
                         </div>
@@ -447,7 +448,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                     setItems(items.filter(item => item.status === 'uploading' || item.status === 'queued'))
                   }
                 >
-                  Clear finished
+                  {t('Clear finished')}
                 </button>
                 <button
                   className="rounded bg-gray-800 px-3 py-1.5 text-sm text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-400"
@@ -458,7 +459,7 @@ const UploadPanel: FC<UploadPanelProps> = ({ path, onUploaded }) => {
                   }
                   onClick={uploadPending}
                 >
-                  Start upload
+                  {t('Start upload')}
                 </button>
               </div>
             </div>

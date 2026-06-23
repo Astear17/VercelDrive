@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useTranslation } from 'next-i18next'
 
@@ -18,7 +19,7 @@ const sortOptions = [
   { value: 'lastModifiedDateTime-desc', label: 'Date (Newest)' },
 ]
 
-export default function FolderControls({
+export default memo(function FolderControls({
   sortConfig,
   setSortConfig,
   typeFilter,
@@ -73,4 +74,4 @@ export default function FolderControls({
       </label>
     </div>
   )
-}
+})

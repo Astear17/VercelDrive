@@ -66,7 +66,8 @@ export const extensions = {
   m3u8: preview.video,
   mkv: preview.video,
   mov: preview.video,
-  avi: preview.video, // won't work!
+  // avi is not playable in browsers via HTML5 <video>
+  // avi: preview.video,
 
   mp3: preview.audio,
   m4a: preview.audio,
