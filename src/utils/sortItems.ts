@@ -1,10 +1,9 @@
 import type { OdFolderChildren } from '../types'
-import type { SortConfig, FileFolderOrder } from '../components/FolderControls'
+import type { SortConfig } from '../components/FolderControls'
 
 export function sortFolderChildren(
   items: OdFolderChildren[],
-  sortConfig: SortConfig,
-  fileFolderOrder: FileFolderOrder
+  sortConfig: SortConfig
 ): OdFolderChildren[] {
   const compare = (a: OdFolderChildren, b: OdFolderChildren): number => {
     let cmp = 0
@@ -33,18 +32,11 @@ export function sortFolderChildren(
     return a.name.localeCompare(b.name, undefined, { sensitivity: 'accent', numeric: true })
   }
 
-  if (fileFolderOrder === 'mixed') {
-    return [...items].sort(compare)
-  }
-
   const folders = items.filter(c => Boolean(c.folder))
   const files = items.filter(c => !c.folder)
 
   folders.sort(compare)
   files.sort(compare)
 
-  if (fileFolderOrder === 'folders-first') {
-    return [...folders, ...files]
-  }
-  return [...files, ...folders]
+  return [...folders, ...files]
 }

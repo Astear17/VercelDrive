@@ -12,7 +12,7 @@ import { humanFileSize, formatModifiedDateTime } from '../utils/fileDetails'
 import { Downloading, Checkbox, ChildIcon, ChildName } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
 import FolderControls from './FolderControls'
-import type { FileFolderOrder, PathTypeFilter, PathTypeOption } from './FolderControls'
+import type { TypeFilter, TypeFilterOption } from './FolderControls'
 
 const FileListItem: FC<{ fileContent: OdFolderChildren }> = ({ fileContent: c }) => {
   return (
@@ -23,10 +23,10 @@ const FileListItem: FC<{ fileContent: OdFolderChildren }> = ({ fileContent: c })
         </div>
         <ChildName name={c.name} folder={Boolean(c.folder)} />
       </div>
-      <div className="col-span-3 hidden flex-shrink-0 font-mono text-sm text-gray-700 dark:text-gray-500 md:block">
+      <div className="col-span-3 hidden flex-shrink-0 text-sm text-gray-700 dark:text-gray-500 md:block">
         {formatModifiedDateTime(c.lastModifiedDateTime)}
       </div>
-      <div className="col-span-1 hidden flex-shrink-0 truncate font-mono text-sm text-gray-700 dark:text-gray-500 md:block">
+      <div className="col-span-1 hidden flex-shrink-0 truncate text-sm text-gray-700 dark:text-gray-500 md:block">
         {humanFileSize(c.size)}
       </div>
     </div>
@@ -48,13 +48,9 @@ const FolderListLayout = ({
   toast,
   sortConfig,
   setSortConfig,
-  itemTypeFilter,
-  setItemTypeFilter,
-  fileFolderOrder,
-  setFileFolderOrder,
-  pathTypeFilter,
-  setPathTypeFilter,
-  pathTypeOptions,
+  typeFilter,
+  setTypeFilter,
+  typeFilterOptions,
   handleItemDelete,
   handleSelectedDelete,
 }) => {
@@ -73,13 +69,9 @@ const FolderListLayout = ({
           <FolderControls
             sortConfig={sortConfig}
             setSortConfig={setSortConfig}
-            itemTypeFilter={itemTypeFilter}
-            setItemTypeFilter={setItemTypeFilter}
-            fileFolderOrder={fileFolderOrder}
-            setFileFolderOrder={setFileFolderOrder}
-            pathTypeFilter={pathTypeFilter}
-            setPathTypeFilter={setPathTypeFilter}
-            pathTypeOptions={pathTypeOptions}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            typeFilterOptions={typeFilterOptions}
           />
         </div>
         <div className="col-span-3 hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">

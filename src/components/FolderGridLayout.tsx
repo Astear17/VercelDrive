@@ -11,7 +11,7 @@ import { formatModifiedDateTime } from '../utils/fileDetails'
 import { Checkbox, ChildIcon, ChildName, Downloading } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
 import FolderControls from './FolderControls'
-import type { FileFolderOrder, PathTypeFilter, PathTypeOption } from './FolderControls'
+import type { TypeFilter, TypeFilterOption } from './FolderControls'
 
 const GridItem = ({ c, path }: { c: OdFolderChildren; path: string }) => {
   // We use the generated medium thumbnail for rendering preview images (excluding folders)
@@ -51,7 +51,7 @@ const GridItem = ({ c, path }: { c: OdFolderChildren; path: string }) => {
             </span>
             <ChildName name={c.name} folder={Boolean(c.folder)} />
           </div>
-          <div className="truncate text-center font-mono text-xs text-gray-700 dark:text-gray-500">
+          <div className="truncate text-center font-sans text-xs text-gray-700 dark:text-gray-500">
             {formatModifiedDateTime(c.lastModifiedDateTime)}
           </div>
         </>
@@ -75,13 +75,9 @@ const FolderGridLayout = ({
   toast,
   sortConfig,
   setSortConfig,
-  itemTypeFilter,
-  setItemTypeFilter,
-  fileFolderOrder,
-  setFileFolderOrder,
-  pathTypeFilter,
-  setPathTypeFilter,
-  pathTypeOptions,
+  typeFilter,
+  setTypeFilter,
+  typeFilterOptions,
   handleItemDelete,
   handleSelectedDelete,
 }) => {
@@ -101,13 +97,9 @@ const FolderGridLayout = ({
           <FolderControls
             sortConfig={sortConfig}
             setSortConfig={setSortConfig}
-            itemTypeFilter={itemTypeFilter}
-            setItemTypeFilter={setItemTypeFilter}
-            fileFolderOrder={fileFolderOrder}
-            setFileFolderOrder={setFileFolderOrder}
-            pathTypeFilter={pathTypeFilter}
-            setPathTypeFilter={setPathTypeFilter}
-            pathTypeOptions={pathTypeOptions}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            typeFilterOptions={typeFilterOptions}
           />
           <Checkbox
             checked={totalSelected}

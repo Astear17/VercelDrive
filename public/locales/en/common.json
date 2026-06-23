@@ -129,11 +129,8 @@
   "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files.": "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files.",
   "Load more": "Load more",
   "{{loaded}} of {{total}} loaded": "{{loaded}} of {{total}} loaded",
-  "File/folder order": "File/folder order",
-  "Mixed": "Mixed",
-  "Folders first": "Folders first",
-  "Files first": "Files first",
-  "Type / path filter": "Type / path filter",
   "All types": "All types",
+  "Folders": "Folders",
+  "Files": "Files",
   "No extension": "No extension"
 }

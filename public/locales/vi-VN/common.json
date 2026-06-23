@@ -122,11 +122,8 @@
   "Personal Vault is not available in VercelDrive. Open it in OneDrive to access protected files.": "Kho lưu trữ cá nhân không khả dụng trong VercelDrive. Hãy mở mục này bằng OneDrive để truy cập các tệp được bảo vệ.",
   "Load more": "Tải thêm",
   "{{loaded}} of {{total}} loaded": "đã tải {{loaded}} / {{total}}",
-  "File/folder order": "Thứ tự file/thư mục",
-  "Mixed": "Mặc định",
-  "Folders first": "Thư mục trước",
-  "Files first": "File trước",
-  "Type / path filter": "Lọc theo loại/đường dẫn",
   "All types": "Tất cả loại",
+  "Folders": "Thư mục",
+  "Files": "Tệp",
   "No extension": "Không có phần mở rộng"
 }
