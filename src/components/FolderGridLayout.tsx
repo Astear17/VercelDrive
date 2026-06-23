@@ -11,6 +11,7 @@ import { formatModifiedDateTime } from '../utils/fileDetails'
 import { Checkbox, ChildIcon, ChildName, Downloading } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
 import FolderControls from './FolderControls'
+import type { FileFolderOrder, PathTypeFilter, PathTypeOption } from './FolderControls'
 
 const GridItem = ({ c, path }: { c: OdFolderChildren; path: string }) => {
   // We use the generated medium thumbnail for rendering preview images (excluding folders)
@@ -76,6 +77,11 @@ const FolderGridLayout = ({
   setSortConfig,
   itemTypeFilter,
   setItemTypeFilter,
+  fileFolderOrder,
+  setFileFolderOrder,
+  pathTypeFilter,
+  setPathTypeFilter,
+  pathTypeOptions,
   handleItemDelete,
   handleSelectedDelete,
 }) => {
@@ -97,6 +103,11 @@ const FolderGridLayout = ({
             setSortConfig={setSortConfig}
             itemTypeFilter={itemTypeFilter}
             setItemTypeFilter={setItemTypeFilter}
+            fileFolderOrder={fileFolderOrder}
+            setFileFolderOrder={setFileFolderOrder}
+            pathTypeFilter={pathTypeFilter}
+            setPathTypeFilter={setPathTypeFilter}
+            pathTypeOptions={pathTypeOptions}
           />
           <Checkbox
             checked={totalSelected}

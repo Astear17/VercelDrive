@@ -12,6 +12,7 @@ import { humanFileSize, formatModifiedDateTime } from '../utils/fileDetails'
 import { Downloading, Checkbox, ChildIcon, ChildName } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
 import FolderControls from './FolderControls'
+import type { FileFolderOrder, PathTypeFilter, PathTypeOption } from './FolderControls'
 
 const FileListItem: FC<{ fileContent: OdFolderChildren }> = ({ fileContent: c }) => {
   return (
@@ -49,6 +50,11 @@ const FolderListLayout = ({
   setSortConfig,
   itemTypeFilter,
   setItemTypeFilter,
+  fileFolderOrder,
+  setFileFolderOrder,
+  pathTypeFilter,
+  setPathTypeFilter,
+  pathTypeOptions,
   handleItemDelete,
   handleSelectedDelete,
 }) => {
@@ -69,6 +75,11 @@ const FolderListLayout = ({
             setSortConfig={setSortConfig}
             itemTypeFilter={itemTypeFilter}
             setItemTypeFilter={setItemTypeFilter}
+            fileFolderOrder={fileFolderOrder}
+            setFileFolderOrder={setFileFolderOrder}
+            pathTypeFilter={pathTypeFilter}
+            setPathTypeFilter={setPathTypeFilter}
+            pathTypeOptions={pathTypeOptions}
           />
         </div>
         <div className="col-span-3 hidden text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 md:block">

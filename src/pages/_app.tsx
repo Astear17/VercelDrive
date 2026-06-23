@@ -61,6 +61,8 @@ import {
   faTimes,
   faSort,
   faFilter,
+  faFolderOpen,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import * as Icons from '@fortawesome/free-brands-svg-icons'
 
@@ -123,6 +125,8 @@ library.add(
   faTimes,
   faSort,
   faFilter,
+  faFolderOpen,
+  faTag,
   ...iconList
 )
 

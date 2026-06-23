@@ -46,7 +46,8 @@ import { PreviewContainer } from './previews/Containers'
 import FolderListLayout from './FolderListLayout'
 import FolderGridLayout from './FolderGridLayout'
 import UploadPanel from './UploadPanel'
-import type { ItemTypeFilter, SortConfig } from './FolderControls'
+import type { ItemTypeFilter, SortConfig, FileFolderOrder, PathTypeFilter, PathTypeOption } from './FolderControls'
+import { sortFolderChildren } from '../utils/sortItems'
 
 // Disabling SSR for some previews
 const EPUBPreview = dynamic(() => import('./previews/EPUBPreview'), {
@@ -191,11 +192,18 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
     direction: 'asc',
   })
   const [itemTypeFilter, setItemTypeFilter] = useState<ItemTypeFilter>('default')
+  const [fileFolderOrder, setFileFolderOrder] = useState<FileFolderOrder>('folders-first')
+  const [pathTypeFilter, setPathTypeFilter] = useState<PathTypeFilter>('all')
 
   // When true, Grid view resumes full auto-crawl after the user clicks "Load more"
   const [gridCrawlUnlocked, setGridCrawlUnlocked] = useState(false)
 
   const path = queryToPath(query)
+
+  // Reset path/type filter when navigating to a different folder
+  useEffect(() => {
+    setPathTypeFilter('all')
+  }, [path])
 
   const { data, error, size, setSize, mutate } = useProtectedSWRInfinite(
     path,
@@ -246,11 +254,61 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
     // Expand list of API returns into flattened file data, defensive filter for Personal Vault
     const allFolderChildren = [].concat(...responses.map(r => r.folder.value))
       .filter(c => !isPersonalVault(c)) as OdFolderObject['value']
-    const folderChildren = allFolderChildren.filter(c => {
+
+    // Compute path/type filter options from all children
+    const pathTypeOptions: PathTypeOption[] = [{ value: 'all', label: 'All types' }]
+    {
+      const folderNames: string[] = []
+      const extSet = new Set<string>()
+      let hasNoExt = false
+      for (const c of allFolderChildren) {
+        if (c.folder) {
+          folderNames.push(c.name)
+        } else if (c.name !== '.password') {
+          const ext = getRawExtension(c.name)
+          if (ext) {
+            extSet.add(ext.toLowerCase())
+          } else {
+            hasNoExt = true
+          }
+        }
+      }
+      folderNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
+      for (const name of folderNames) {
+        pathTypeOptions.push({ value: `folder:${name}`, label: name })
+      }
+      const sortedExts = Array.from(extSet).sort()
+      for (const ext of sortedExts) {
+        pathTypeOptions.push({ value: `.${ext}`, label: `.${ext}` })
+      }
+      if (hasNoExt) {
+        pathTypeOptions.push({ value: '__noext__', label: t('No extension') })
+      }
+    }
+
+    // Pipeline: rawItems → file/folder filter → path/type filter → sort
+    const filteredByType = allFolderChildren.filter(c => {
       if (itemTypeFilter === 'folders') return Boolean(c.folder)
       if (itemTypeFilter === 'files') return !c.folder
       return true
     })
+
+    const filteredByPathType = filteredByType.filter(c => {
+      if (pathTypeFilter === 'all') return true
+      if (pathTypeFilter.startsWith('folder:')) {
+        return Boolean(c.folder) && c.name === pathTypeFilter.substring(7)
+      }
+      if (pathTypeFilter === '__noext__') {
+        return !c.folder && !getRawExtension(c.name)
+      }
+      if (pathTypeFilter.startsWith('.')) {
+        const ext = pathTypeFilter.substring(1)
+        return !c.folder && getRawExtension(c.name).toLowerCase() === ext
+      }
+      return true
+    })
+
+    const folderChildren = sortFolderChildren(filteredByPathType, sortConfig, fileFolderOrder)
 
     const totalChildren = responses[0].folder['@odata.count'] || 1
     const percent = Math.min(100, Math.round((allFolderChildren.length / totalChildren) * 100))
@@ -481,6 +539,11 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
       setSortConfig,
       itemTypeFilter,
       setItemTypeFilter,
+      fileFolderOrder,
+      setFileFolderOrder,
+      pathTypeFilter,
+      setPathTypeFilter,
+      pathTypeOptions,
       handleItemDelete,
       handleSelectedDelete,
     }
