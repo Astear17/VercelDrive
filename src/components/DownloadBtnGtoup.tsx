@@ -10,6 +10,7 @@ import { useRouter } from 'next/router'
 
 import { getBaseUrl } from '../utils/getBaseUrl'
 import { getStoredToken } from '../utils/protectedRouteHandler'
+import { isRawReadable } from '../utils/isRawReadable'
 import CustomEmbedLinkMenu from './CustomEmbedLinkMenu'
 
 const btnStyleMap = (btnColor?: string) => {
@@ -71,10 +72,21 @@ const DownloadButtonGroup = () => {
 
   const { t } = useTranslation()
 
+  const rawReadable = isRawReadable(asPath)
+
   return (
     <>
       <CustomEmbedLinkMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} path={asPath} />
       <div className="flex flex-wrap justify-center gap-2">
+        {rawReadable && (
+          <DownloadButton
+            onClickCallback={() => window.open(`/raw/${asPath}${hashedToken ? `?odpt=${hashedToken}` : ''}`)}
+            btnColor="green"
+            btnText={t('Raw')}
+            btnIcon="code"
+            btnTitle={t('View raw')}
+          />
+        )}
         <DownloadButton
           onClickCallback={() => window.open(`/api/raw/?path=${asPath}${hashedToken ? `&odpt=${hashedToken}` : ''}`)}
           btnColor="blue"
