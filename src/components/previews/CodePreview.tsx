@@ -12,6 +12,7 @@ import FourOhFour from '../FourOhFour'
 import Loading from '../Loading'
 import DownloadButtonGroup from '../DownloadBtnGtoup'
 import { DownloadBtnContainer, PreviewContainer } from './Containers'
+import { PreviewTabs } from './PreviewTabs'
 
 const CodePreview: FC<{ file: any }> = ({ file }) => {
   const { asPath } = useRouter()
@@ -43,12 +44,14 @@ const CodePreview: FC<{ file: any }> = ({ file }) => {
   return (
     <>
       <PreviewContainer>
-        <SyntaxHighlighter
-          language={getLanguageByFileName(file.name)}
-          style={theme === 'dark' ? tomorrowNightEighties : tomorrow}
-        >
-          {content}
-        </SyntaxHighlighter>
+        <PreviewTabs showRaw={true} rawContent={content}>
+          <SyntaxHighlighter
+            language={getLanguageByFileName(file.name)}
+            style={theme === 'dark' ? tomorrowNightEighties : tomorrow}
+          >
+            {content}
+          </SyntaxHighlighter>
+        </PreviewTabs>
       </PreviewContainer>
       <DownloadBtnContainer>
         <DownloadButtonGroup />

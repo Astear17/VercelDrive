@@ -15,6 +15,7 @@ import FourOhFour from '../FourOhFour'
 import Loading from '../Loading'
 import DownloadButtonGroup from '../DownloadBtnGtoup'
 import { DownloadBtnContainer, PreviewContainer } from './Containers'
+import { PreviewTabs } from './PreviewTabs'
 
 const MarkdownPreview: FC<{
   file: any
@@ -112,21 +113,23 @@ const MarkdownPreview: FC<{
   return (
     <div>
       <PreviewContainer>
-        <div className="markdown-body">
-          {/* Using rehypeRaw to render HTML inside Markdown is potentially dangerous, use under safe environments. (#18) */}
-          <ReactMarkdown
-            // @ts-ignore
-            remarkPlugins={[remarkGfm, remarkMath]}
-            // The type error is introduced by caniuse-lite upgrade.
-            // Since type errors occur often in remark toolchain and the use is so common,
-            // ignoring it shoudld be safe enough.
-            // @ts-ignore
-            rehypePlugins={[rehypeKatex, rehypeRaw]}
-            components={customRenderer}
-          >
-            {content}
-          </ReactMarkdown>
-        </div>
+        <PreviewTabs showRaw={true} rawContent={content}>
+          <div className="markdown-body">
+            {/* Using rehypeRaw to render HTML inside Markdown is potentially dangerous, use under safe environments. (#18) */}
+            <ReactMarkdown
+              // @ts-ignore
+              remarkPlugins={[remarkGfm, remarkMath]}
+              // The type error is introduced by caniuse-lite upgrade.
+              // Since type errors occur often in remark toolchain and the use is so common,
+              // ignoring it shoudld be safe enough.
+              // @ts-ignore
+              rehypePlugins={[rehypeKatex, rehypeRaw]}
+              components={customRenderer}
+            >
+              {content}
+            </ReactMarkdown>
+          </div>
+        </PreviewTabs>
       </PreviewContainer>
       {standalone && (
         <DownloadBtnContainer>

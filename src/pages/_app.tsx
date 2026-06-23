@@ -63,6 +63,7 @@ import {
   faFilter,
   faTag,
   faCode,
+  faEye,
 } from '@fortawesome/free-solid-svg-icons'
 import * as Icons from '@fortawesome/free-brands-svg-icons'
 
@@ -127,6 +128,7 @@ library.add(
   faFilter,
   faTag,
   faCode,
+  faEye,
   ...iconList
 )
 

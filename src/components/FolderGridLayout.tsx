@@ -10,7 +10,6 @@ import { getBaseUrl } from '../utils/getBaseUrl'
 import { formatModifiedDateTime } from '../utils/fileDetails'
 import { Checkbox, ChildIcon, ChildName, Downloading } from './FileListing'
 import { getStoredToken } from '../utils/protectedRouteHandler'
-import { isRawReadable } from '../utils/isRawReadable'
 import FolderControls from './FolderControls'
 import type { TypeFilter, TypeFilterOption } from './FolderControls'
 
@@ -207,17 +206,6 @@ const FolderGridLayout = ({
                   >
                     <FontAwesomeIcon icon={['far', 'arrow-alt-circle-down']} />
                   </a>
-                  {isRawReadable(c.name) && (
-                    <a
-                      title={t('View raw')}
-                      className="cursor-pointer rounded px-1.5 py-1 hover:bg-gray-300 dark:hover:bg-gray-600"
-                      href={`/raw/${getItemPath(c.name)}${hashedToken ? `?odpt=${hashedToken}` : ''}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <FontAwesomeIcon icon="code" />
-                    </a>
-                  )}
                   <span
                     title={t('Delete file')}
                     className="cursor-pointer rounded px-1.5 py-1 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
