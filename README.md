@@ -122,3 +122,10 @@ Based on [spencerwooo/onedrive-vercel-index](https://github.com/spencerwooo/oned
 ## License
 
 [MIT](LICENSE)
+
+<div align="center">
+  <p><strong>Preview self-hosted over Vercel with FreeDNS subdomain</strong></p>
+  <p>
+    <img src="https://raw.githubusercontent.com/Astear17/VercelDrive/refs/heads/main/public/images/branding.png" />
+  </p>
+</div>
