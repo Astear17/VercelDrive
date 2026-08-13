@@ -6,6 +6,7 @@ class MyDocument extends Document {
   render() {
     const title = siteConfig.title || 'VercelDrive'
     const description = `Browse, preview, and download files from ${title}. A self-hosted OneDrive file browser.`
+    const ogImage = `${siteConfig.domain}/images/branding.png`
 
     return (
       <Html>
@@ -16,9 +17,11 @@ class MyDocument extends Document {
           <meta property="og:title" content={title} />
           <meta property="og:description" content={description} />
           <meta property="og:site_name" content={title} />
-          <meta name="twitter:card" content="summary" />
+          <meta property="og:image" content={ogImage} />
+          <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={title} />
           <meta name="twitter:description" content={description} />
+          <meta name="twitter:image" content={ogImage} />
           <link rel="icon" href="/favicon.ico" />
           <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
           <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
