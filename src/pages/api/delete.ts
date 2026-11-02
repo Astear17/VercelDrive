@@ -56,7 +56,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return
   }
 
-  const cleanPath = pathPosix.resolve('/', pathPosix.normalize(path)).replace(/\/$/, '')
+  const decodedPath = decodeURIComponent(path)
+
+const cleanPath = pathPosix.resolve(
+  '/',
+  pathPosix.normalize(decodedPath)
+).replace(/\/$/, '')
+
   if (!cleanPath || cleanPath === '/') {
     res.status(400).json({ error: 'Refusing to delete the drive root.' })
     return
