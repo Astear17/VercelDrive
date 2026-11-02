@@ -376,7 +376,7 @@ const FileListing: FC<{ query?: ParsedUrlQuery }> = ({ query }) => {
 
     const deleteItem = async (itemPath: string, itemName: string, password?: string) => {
       try {
-        const data: Record<string, string> = { path: itemPath }
+        const data: Record<string, string> = { path: decodeURIComponent(itemPath) }
         if (password) data.password = password
 
         await axios.delete('/api/delete', { data })
